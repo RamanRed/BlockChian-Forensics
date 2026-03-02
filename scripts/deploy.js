@@ -7,9 +7,14 @@
  * After deployment, copy the printed address into backend/.env as CONTRACT_ADDRESS.
  */
 
-const { ethers } = require("hardhat");
-const fs = require("fs");
-const path = require("path");
+import pkg from "hardhat";
+const { ethers, artifacts } = pkg;
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 async function main() {
   const [deployer] = await ethers.getSigners();
@@ -40,5 +45,5 @@ async function main() {
 
 main().catch((err) => {
   console.error(err);
-  process.exit(1);
+  process.exitCode = 1;
 });

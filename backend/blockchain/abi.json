@@ -1,37 +1,128 @@
 [
   {
+    "anonymous": false,
     "inputs": [
-      {"internalType": "string", "name": "evidenceHash", "type": "string"},
-      {"internalType": "string", "name": "ipfsCid", "type": "string"},
-      {"internalType": "uint256", "name": "aiScore", "type": "uint256"},
-      {"internalType": "string", "name": "aiStatus", "type": "string"},
-      {"internalType": "string", "name": "modelVersion", "type": "string"}
+      {
+        "indexed": true,
+        "internalType": "string",
+        "name": "fileHash",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "submitter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      }
+    ],
+    "name": "EvidenceStored",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "fileHash",
+        "type": "string"
+      }
+    ],
+    "name": "evidenceExists",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "fileHash",
+        "type": "string"
+      }
+    ],
+    "name": "getEvidence",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "evidenceHash",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "ipfsCid",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "aiScore",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "aiStatus",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "modelVersion",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "timestamp",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "submitter",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "fileHash",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "ipfsCid",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "aiScore",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "aiStatus",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "modelVersion",
+        "type": "string"
+      }
     ],
     "name": "storeEvidence",
     "outputs": [],
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "string", "name": "evidenceHash", "type": "string"}],
-    "name": "getEvidence",
-    "outputs": [
-      {"internalType": "string", "name": "", "type": "string"},
-      {"internalType": "string", "name": "", "type": "string"},
-      {"internalType": "uint256", "name": "", "type": "uint256"},
-      {"internalType": "string", "name": "", "type": "string"},
-      {"internalType": "string", "name": "", "type": "string"},
-      {"internalType": "uint256", "name": "", "type": "uint256"},
-      {"internalType": "address", "name": "", "type": "address"}
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [{"internalType": "string", "name": "evidenceHash", "type": "string"}],
-    "name": "evidenceExists",
-    "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-    "stateMutability": "view",
     "type": "function"
   }
 ]
