@@ -4,7 +4,7 @@
 
 import pytest
 from pathlib import Path
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 import sys
 
 BACKEND_PATH = Path(__file__).parent.parent / "backend"
@@ -18,8 +18,9 @@ class TestHealthEndpoint:
     async def test_health_check(self):
         """Test /api/health endpoint."""
         from main import app
-        
-        async with AsyncClient(app=app, base_url="http://test") as client:
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get("/api/health")
             assert response.status_code == 200
             data = response.json()
@@ -30,8 +31,9 @@ class TestHealthEndpoint:
     async def test_root_endpoint(self):
         """Test / root endpoint."""
         from main import app
-        
-        async with AsyncClient(app=app, base_url="http://test") as client:
+
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.get("/")
             assert response.status_code == 200
             data = response.json()

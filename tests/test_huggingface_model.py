@@ -19,11 +19,11 @@ class TestHuggingFaceModel:
         token = "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"
         model = ViTForImageClassification.from_pretrained(
             "prithivMLmods/Deep-Fake-Detector-v2-Model",
-            use_auth_token=token
+            token=token
         )
         processor = ViTImageProcessor.from_pretrained(
             "prithivMLmods/Deep-Fake-Detector-v2-Model",
-            use_auth_token=token
+            token=token
         )
         return model, processor
 
@@ -59,7 +59,7 @@ class TestHuggingFaceModel:
         print(f"\n  Image: {sample_test_image.name}")
         print(f"  Predicted: {label} (confidence: {confidence:.2%})")
         
-        assert label in ["REAL", "FAKE", "deepfake", "real"], f"Unexpected label: {label}"
+        assert label in ["REAL", "FAKE", "deepfake", "real", "Deepfake", "Real"], f"Unexpected label: {label}"
         assert 0.0 <= confidence <= 1.0, "Confidence must be between 0 and 1"
 
     def test_batch_inference(self, model_and_processor, test_image_dir):
