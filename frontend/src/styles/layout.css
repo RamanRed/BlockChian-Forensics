@@ -1,0 +1,82 @@
+.app-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.app-main {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-container {
+  padding: 1.2rem;
+}
+
+.topbar {
+  height: 64px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+  background: #fff;
+}
+
+.brand {
+  font-weight: 700;
+  color: var(--primary-2);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.user-chip {
+  font-size: 0.9rem;
+}
+
+.sidebar {
+  border-right: 1px solid var(--line);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  background: #fff;
+}
+
+.sidebar a {
+  padding: 0.55rem 0.65rem;
+  border-radius: 0.5rem;
+  color: #1f2f42;
+}
+
+.sidebar a.active {
+  background: #e8eff9;
+  color: #0f3f74;
+}
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(140px, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.filter-row {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-row {
+    grid-template-columns: 1fr;
+  }
+}

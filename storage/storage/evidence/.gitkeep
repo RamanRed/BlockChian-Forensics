@@ -1,0 +1,3 @@
+# This directory stores uploaded evidence files.
+# Files are named with UUID + timestamp to prevent collisions.
+# Example: a3f9c1e2d4b5_20240101120000.jpg

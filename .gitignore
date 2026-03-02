@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+*.env
+!.env.example
+
+# DB & storage
+*.db
+*.sqlite3
+storage/evidence/*
+storage/quarantine/*
+!storage/evidence/.gitkeep
+!storage/quarantine/.gitkeep
+
+# AI models
+models/*.h5
+models/*.pt
+models/*.pth
+
+# Logs
+*.log
+logs/
+
+# Node
+node_modules/
+.next/
+out/
+.env.local
+!.env.local.example
+
+# IDE
+.vscode/settings.json
+.idea/
+*.swp
+.DS_Store

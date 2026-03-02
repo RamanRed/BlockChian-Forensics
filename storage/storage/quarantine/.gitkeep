@@ -1,0 +1,3 @@
+# This directory stores quarantined (SUSPICIOUS) evidence files.
+# Files are moved here automatically when AI score is below threshold.
+# Only admins can release or delete files from this directory.
