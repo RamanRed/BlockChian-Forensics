@@ -5,6 +5,7 @@ import Sidebar from "../src/components/Sidebar";
 import { AuthProvider } from "../src/context/AuthContext";
 import { useAuth } from "../src/hooks/useAuth";
 import { useRouter } from "next/router";
+import Head from "next/head";
 
 function Shell({ Component, pageProps }) {
   const { token } = useAuth();
@@ -14,24 +15,29 @@ function Shell({ Component, pageProps }) {
   if (isAuthPage) {
     return (
       <>
-        <Navbar />
-        <main className="page-container">
-          <Component {...pageProps} />
-        </main>
+        <Head>
+          <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        </Head>
+        <Component {...pageProps} />
       </>
     );
   }
 
   return (
-    <div className="app-shell">
-      {token ? <Sidebar /> : null}
-      <div className="app-main">
-        <Navbar />
-        <main className="page-container">
-          <Component {...pageProps} />
-        </main>
+    <>
+      <Head>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+      </Head>
+      <div className="app-shell">
+        {token ? <Sidebar /> : null}
+        <div className="app-main">
+          <Navbar />
+          <main className="page-container">
+            <Component {...pageProps} />
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
