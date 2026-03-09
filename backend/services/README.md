@@ -1,13 +1,13 @@
-﻿# frontend
+﻿# services
 
 This folder is part of the Digital Evidence Preservation System.
 
 ## Scope
-- Path: frontend
+- Path: backend\services
 
 ## Contains
-- Subfolders: node_modules, pages, public, src
-- Key files: .env.example, .env.local, .env.local.example, next.config.js, package-lock.json, package.json
+- Subfolders: none
+- Key files: ai_service.py, audit_service.py, blockchain_service.py, hashing_service.py, ipfs_service.py, __init__.py
 
 ## Notes
 - Auto-generated README for project organization.

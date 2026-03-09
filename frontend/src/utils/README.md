@@ -1,13 +1,13 @@
-﻿# frontend
+﻿# utils
 
 This folder is part of the Digital Evidence Preservation System.
 
 ## Scope
-- Path: frontend
+- Path: frontend\src\utils
 
 ## Contains
-- Subfolders: node_modules, pages, public, src
-- Key files: .env.example, .env.local, .env.local.example, next.config.js, package-lock.json, package.json
+- Subfolders: none
+- Key files: formatDate.js, hashShortener.js, roleUtils.js
 
 ## Notes
 - Auto-generated README for project organization.

@@ -34,7 +34,8 @@ function Register() {
       });
       router.push("/login");
     } catch (err) {
-      setError(err.response?.data?.detail || "Registration failed");
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === "string" ? detail : Array.isArray(detail) ? detail.map((e) => e.msg).join(", ") : "Registration failed");
     } finally {
       setLoading(false);
     }

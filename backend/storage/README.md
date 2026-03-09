@@ -1,13 +1,13 @@
-﻿# frontend
+﻿# storage
 
 This folder is part of the Digital Evidence Preservation System.
 
 ## Scope
-- Path: frontend
+- Path: backend\storage
 
 ## Contains
-- Subfolders: node_modules, pages, public, src
-- Key files: .env.example, .env.local, .env.local.example, next.config.js, package-lock.json, package.json
+- Subfolders: evidence, quarantine
+- Key files: none
 
 ## Notes
 - Auto-generated README for project organization.

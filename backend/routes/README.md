@@ -1,13 +1,13 @@
-﻿# frontend
+﻿# routes
 
 This folder is part of the Digital Evidence Preservation System.
 
 ## Scope
-- Path: frontend
+- Path: backend\routes
 
 ## Contains
-- Subfolders: node_modules, pages, public, src
-- Key files: .env.example, .env.local, .env.local.example, next.config.js, package-lock.json, package.json
+- Subfolders: none
+- Key files: admin_routes.py, auth_routes.py, evidence_routes.py, verification_routes.py, __init__.py
 
 ## Notes
 - Auto-generated README for project organization.

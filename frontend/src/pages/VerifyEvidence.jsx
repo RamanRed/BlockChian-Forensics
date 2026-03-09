@@ -24,7 +24,8 @@ function VerifyEvidence() {
       const data = await verificationService.verifyEvidence(id);
       setResult(data);
     } catch (err) {
-      setError(err.response?.data?.detail || "Verification failed");
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === "string" ? detail : Array.isArray(detail) ? detail.map((e) => e.msg).join(", ") : "Verification failed");
     } finally {
       setLoading(false);
     }

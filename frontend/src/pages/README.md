@@ -1,13 +1,13 @@
-﻿# frontend
+﻿# pages
 
 This folder is part of the Digital Evidence Preservation System.
 
 ## Scope
-- Path: frontend
+- Path: frontend\src\pages
 
 ## Contains
-- Subfolders: node_modules, pages, public, src
-- Key files: .env.example, .env.local, .env.local.example, next.config.js, package-lock.json, package.json
+- Subfolders: none
+- Key files: AdminPanel.jsx, AuditLogs.jsx, Dashboard.jsx, EvidenceDetails.jsx, Login.jsx, Quarantine.jsx, Register.jsx, UploadEvidence.jsx
 
 ## Notes
 - Auto-generated README for project organization.

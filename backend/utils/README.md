@@ -1,13 +1,13 @@
-﻿# frontend
+﻿# utils
 
 This folder is part of the Digital Evidence Preservation System.
 
 ## Scope
-- Path: frontend
+- Path: backend\utils
 
 ## Contains
-- Subfolders: node_modules, pages, public, src
-- Key files: .env.example, .env.local, .env.local.example, next.config.js, package-lock.json, package.json
+- Subfolders: none
+- Key files: file_utils.py, logger.py, __init__.py
 
 ## Notes
 - Auto-generated README for project organization.

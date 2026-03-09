@@ -1,13 +1,13 @@
-﻿# frontend
+﻿# auth
 
 This folder is part of the Digital Evidence Preservation System.
 
 ## Scope
-- Path: frontend
+- Path: backend\auth
 
 ## Contains
-- Subfolders: node_modules, pages, public, src
-- Key files: .env.example, .env.local, .env.local.example, next.config.js, package-lock.json, package.json
+- Subfolders: none
+- Key files: dependencies.py, jwt_handler.py, password_utils.py, __init__.py
 
 ## Notes
 - Auto-generated README for project organization.

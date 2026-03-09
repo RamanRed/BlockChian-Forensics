@@ -17,7 +17,8 @@ function UploadEvidence() {
       const data = await evidenceService.uploadEvidence(formData);
       setResult(data);
     } catch (err) {
-      setError(err.response?.data?.detail || "Upload failed");
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === "string" ? detail : Array.isArray(detail) ? detail.map((e) => e.msg).join(", ") : "Upload failed");
     } finally {
       setLoading(false);
     }

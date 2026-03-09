@@ -21,7 +21,8 @@ function Login() {
       login(result);
       router.push("/dashboard");
     } catch (err) {
-      setError(err.response?.data?.detail || "Login failed");
+      const detail = err.response?.data?.detail;
+      setError(typeof detail === "string" ? detail : Array.isArray(detail) ? detail.map((e) => e.msg).join(", ") : "Login failed");
     } finally {
       setLoading(false);
     }
