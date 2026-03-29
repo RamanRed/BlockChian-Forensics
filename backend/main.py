@@ -1,6 +1,6 @@
 """
-Digital Forensic Evidence Preservation System
-Main FastAPI Application Entry Point
+DIRS — Digital Investigation Record System
+Main FastAPI Application Entry Point  (v2.0.0)
 """
 
 from fastapi import FastAPI, Request
@@ -14,23 +14,29 @@ import uuid
 from dotenv import load_dotenv
 
 from database import Base, engine
-from routes.auth_routes import router as auth_router
-from routes.evidence_routes import router as evidence_router
+from routes.auth_routes        import router as auth_router
+from routes.fir_routes         import router as fir_router
+from routes.case_diary_routes  import router as diary_router
+from routes.seizure_routes     import router as seizure_router
+from routes.custody_routes     import router as custody_router
+from routes.person_routes      import router as person_router
+from routes.chargesheet_routes import router as chargesheet_router
+from routes.court_routes       import router as court_router
 from routes.verification_routes import router as verification_router
-from routes.admin_routes import router as admin_router
+from routes.admin_routes       import router as admin_router
 from utils.logger import setup_logger
 
 load_dotenv()
 logger = setup_logger(__name__)
 
-APP_VERSION = "1.0.0"
+APP_VERSION = "2.0.0"
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     start = time.time()
     logger.info("=" * 60)
-    logger.info("Starting Digital Forensic Evidence Preservation System")
+    logger.info("Starting DIRS — Digital Investigation Record System")
     logger.info(f"Version: {APP_VERSION}")
     Base.metadata.create_all(bind=engine)
     os.makedirs("storage/evidence", exist_ok=True)
@@ -39,30 +45,42 @@ async def lifespan(app: FastAPI):
     logger.info(f"Startup complete in {elapsed:.2f}s. DB tables ready, storage dirs OK.")
     logger.info("=" * 60)
     yield
-    logger.info("Shutting down Digital Forensic Evidence Preservation System...")
+    logger.info("Shutting down DIRS...")
 
 
 app = FastAPI(
-    title="Digital Forensic Evidence Preservation System",
-    description="""Blockchain + AI-Based Authenticity Verification for Digital Evidence.
+    title="DIRS — Digital Investigation Record System",
+    description="""
+**CrPC-Aligned Digital Investigation Record System**
 
-## Features
-- AI deepfake detection (image & video)
-- SHA-256 file hashing and evidence binding
-- Blockchain timestamping via Solidity smart contract
-- Off-chain storage with optional IPFS
-- JWT authentication with role-based access control
-- Full audit trail
+Blockchain + AI-Based authenticity verification for Indian police forensic investigations.
+
+## Modules
+- **FIR** — First Information Report (Section 154 CrPC) — immutable, append-only corrections
+- **Case Diary** — Investigation Journal (Section 172 CrPC) — strict append-only
+- **Seizure & Property** — Seizure Memo + Malkhana Property Register with AI analysis
+- **Chain of Custody** — Property Movement Register — full custody trail
+- **Persons** — Person Register + Case-Person Role Mapping
+- **Charge Sheet** — Final Report (Section 173 CrPC) — blockchain-hashed
+- **Court** — Court Proceedings + Public Blockchain Verification Portal (no auth)
+- **Auth** — JWT with role-based access control (IO / SP / DSP / CFSL / Court / Admin)
+- **Audit** — Zero-trust append-only audit trail — every read and write logged
 """,
     version=APP_VERSION,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
     openapi_tags=[
-        {"name": "Authentication", "description": "Register, login, and manage user sessions"},
-        {"name": "Evidence", "description": "Upload, retrieve, and manage forensic evidence"},
-        {"name": "Verification", "description": "Verify evidence integrity against blockchain records"},
-        {"name": "Admin", "description": "Admin controls, audit logs, and user management"},
-        {"name": "Health", "description": "Service health check"},
+        {"name": "Auth",           "description": "Register, login, JWT token"},
+        {"name": "FIR",            "description": "First Information Report — Sec 154 CrPC"},
+        {"name": "Case Diary",     "description": "Investigation Journal — Sec 172 CrPC (append-only)"},
+        {"name": "Seizure",        "description": "Seizure Memo + Property Register (Malkhana)"},
+        {"name": "Custody",        "description": "Property Movement / Chain of Custody"},
+        {"name": "Persons",        "description": "Person Register + Case-Person Mapping"},
+        {"name": "Charge Sheet",   "description": "Final Report — Sec 173 CrPC"},
+        {"name": "Court",          "description": "Court Proceedings + Public Verification Portal"},
+        {"name": "Verification",   "description": "Blockchain integrity verification"},
+        {"name": "Admin",          "description": "Audit logs, user management"},
+        {"name": "Health",         "description": "Service health probe"},
     ],
     lifespan=lifespan
 )
@@ -82,7 +100,6 @@ app.add_middleware(
 
 @app.middleware("http")
 async def add_request_id_and_timing(request: Request, call_next):
-    """Attach a unique request ID and log response time for every request."""
     request_id = str(uuid.uuid4())[:8]
     request.state.request_id = request_id
     start = time.perf_counter()
@@ -104,10 +121,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     logger.error(f"[{request_id}] Unhandled exception on {request.url.path}: {exc}", exc_info=True)
     return JSONResponse(
         status_code=500,
-        content={
-            "detail": "An internal server error occurred.",
-            "request_id": request_id,
-        }
+        content={"detail": "An internal server error occurred.", "request_id": request_id}
     )
 
 
@@ -115,31 +129,37 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Routers
 # ---------------------------------------------------------------------------
 
-app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
-app.include_router(evidence_router, prefix="/api/evidence", tags=["Evidence"])
-app.include_router(verification_router, prefix="/api/verify", tags=["Verification"])
-app.include_router(admin_router, prefix="/api/admin", tags=["Admin"])
+app.include_router(auth_router,          prefix="/api/auth",         tags=["Auth"])
+app.include_router(fir_router,           prefix="/api/fir",          tags=["FIR"])
+app.include_router(diary_router,         prefix="/api/diary",        tags=["Case Diary"])
+app.include_router(seizure_router,       prefix="/api/seizure",      tags=["Seizure"])
+app.include_router(custody_router,       prefix="/api/custody",      tags=["Custody"])
+app.include_router(person_router,        prefix="/api/persons",      tags=["Persons"])
+app.include_router(chargesheet_router,   prefix="/api/chargesheet",  tags=["Charge Sheet"])
+app.include_router(court_router,         prefix="/api/court",        tags=["Court"])
+app.include_router(verification_router,  prefix="/api/verify",       tags=["Verification"])
+app.include_router(admin_router,         prefix="/api/admin",        tags=["Admin"])
 
 
 # ---------------------------------------------------------------------------
-# Core Endpoints
+# Health
 # ---------------------------------------------------------------------------
 
 @app.get("/api/health", tags=["Health"])
 async def health_check():
-    """Lightweight health probe for load-balancers and monitoring."""
     return {
         "status": "healthy",
         "version": APP_VERSION,
-        "service": "Digital Forensic Evidence Preservation System",
+        "service": "DIRS — Digital Investigation Record System",
     }
 
 
 @app.get("/", tags=["Health"], include_in_schema=False)
 async def root():
     return {
-        "message": "Digital Forensic Evidence Preservation System API",
+        "message": "DIRS — Digital Investigation Record System API",
         "version": APP_VERSION,
         "docs": "/api/docs",
         "health": "/api/health",
+        "public_verification": "/api/court/verify/{hash}",
     }

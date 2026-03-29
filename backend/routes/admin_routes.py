@@ -1,19 +1,14 @@
 """
-Admin Routes
-GET    /audit/logs        - Fetch audit logs
-GET    /quarantine        - List quarantined files
-DELETE /evidence/{id}    - Delete evidence (restricted to admin)
-GET    /users            - List all users
-PATCH  /users/{id}/role  - Update user role
+Admin Routes — Audit logs, user management, quarantine list, case-level admin.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from models import User, Evidence, AuditLog, UserRole
-from schemas import AuditLogResponse, EvidenceListResponse, UserResponse
-from auth.dependencies import require_admin, require_investigator, require_auditor_or_above
+from models import User, PropertyRegister, AuditLog, UserRole
+from schemas import AuditLogResponse, PropertyRegisterResponse, UserResponse
+from auth.dependencies import require_admin, require_investigator
 from services.audit_service import log_action
 from utils.logger import setup_logger
 import os
@@ -26,56 +21,37 @@ logger = setup_logger(__name__)
 async def get_audit_logs(
     skip: int = 0, limit: int = 100,
     user_id: Optional[int] = None,
+    action: Optional[str] = None,
+    fir_id: Optional[int] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_auditor_or_above)
+    current_user: User = Depends(require_admin),
 ):
-    """Fetch audit logs with optional filtering by user."""
+    """Fetch audit logs with optional filtering. Admin/Auditor only."""
     query = db.query(AuditLog)
     if user_id:
         query = query.filter(AuditLog.user_id == user_id)
-    logs = query.order_by(AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
-    return logs
+    if action:
+        query = query.filter(AuditLog.action == action)
+    if fir_id:
+        query = query.filter(AuditLog.fir_id == fir_id)
+    return query.order_by(AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
 
 
-@router.get("/quarantine", response_model=List[EvidenceListResponse])
-async def get_quarantined_files(
+@router.get("/quarantine", response_model=List[PropertyRegisterResponse])
+async def get_quarantined_items(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_investigator)
+    current_user: User = Depends(require_investigator),
 ):
-    """List all quarantined (suspicious) evidence files."""
-    quarantined = db.query(Evidence).filter(Evidence.is_quarantined == 1).all()
-    return quarantined
-
-
-@router.delete("/evidence/{evidence_id}", status_code=status.HTTP_200_OK)
-async def delete_evidence(
-    evidence_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
-):
-    """Permanently delete evidence record and associated file. Admin only."""
-    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).first()
-    if not evidence:
-        raise HTTPException(status_code=404, detail="Evidence not found")
-
-    # Delete file from storage
-    if evidence.storage_path and os.path.exists(evidence.storage_path):
-        os.remove(evidence.storage_path)
-
-    log_action(db, user_id=current_user.id, action="EVIDENCE_DELETED", evidence_id=evidence_id,
-               details=f"Hash: {evidence.file_hash}")
-    db.delete(evidence)
-    db.commit()
-    logger.warning(f"Evidence {evidence_id} deleted by admin {current_user.email}")
-    return {"message": f"Evidence {evidence_id} deleted successfully"}
+    """List all AI-flagged quarantined digital evidence items."""
+    return db.query(PropertyRegister).filter(PropertyRegister.is_quarantined == True).all()
 
 
 @router.get("/users", response_model=List[UserResponse])
 async def get_all_users(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin),
 ):
-    """List all registered users."""
+    """List all registered users. Admin only."""
     return db.query(User).all()
 
 
@@ -84,9 +60,9 @@ async def update_user_role(
     user_id: int,
     role: UserRole,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_admin)
+    current_user: User = Depends(require_admin),
 ):
-    """Update a user's role."""
+    """Update a user's role. Admin only. Change is audit-logged."""
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -94,5 +70,23 @@ async def update_user_role(
     user.role = role
     db.commit()
     log_action(db, user_id=current_user.id, action="USER_ROLE_UPDATED",
-               details=f"User {user_id}: {old_role} -> {role}")
+               details=f"User {user_id}: {old_role} → {role}")
     return {"message": f"User {user_id} role updated to {role}"}
+
+
+@router.patch("/users/{user_id}/activate")
+async def toggle_user_active(
+    user_id: int,
+    is_active: bool,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_admin),
+):
+    """Activate or deactivate a user account. Admin only."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    user.is_active = is_active
+    db.commit()
+    log_action(db, user_id=current_user.id, action="USER_DEACTIVATED" if not is_active else "USER_ACTIVATED",
+               details=f"User {user_id}")
+    return {"message": f"User {user_id} {'activated' if is_active else 'deactivated'}"}

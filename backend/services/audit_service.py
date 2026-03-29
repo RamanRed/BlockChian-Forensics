@@ -1,10 +1,10 @@
 """
-Audit Logging Service
+DIRS — Audit Service
+Logs every read and write action. Zero-trust: even internal admin access is logged.
 """
 
 from sqlalchemy.orm import Session
-from typing import Optional, List
-from models import AuditLog
+from typing import Optional
 from utils.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -14,39 +14,41 @@ def log_action(
     db: Session,
     user_id: int,
     action: str,
+    fir_id: Optional[int] = None,
     evidence_id: Optional[int] = None,
+    chargesheet_id: Optional[int] = None,
     details: Optional[str] = None,
-    ip_address: Optional[str] = None
-) -> AuditLog:
-    """Create an audit log entry."""
-    entry = AuditLog(
-        user_id=user_id,
-        action=action,
-        evidence_id=evidence_id,
-        details=details,
-        ip_address=ip_address
-    )
-    db.add(entry)
-    db.commit()
-    db.refresh(entry)
-    logger.debug(f"Audit: user={user_id} action={action} evidence={evidence_id}")
-    return entry
-
-
-def fetch_logs(
-    db: Session,
-    user_id: Optional[int] = None,
-    action: Optional[str] = None,
-    evidence_id: Optional[int] = None,
-    limit: int = 100,
-    skip: int = 0
-) -> List[AuditLog]:
-    """Fetch audit logs with optional filters."""
-    query = db.query(AuditLog)
-    if user_id:
-        query = query.filter(AuditLog.user_id == user_id)
-    if action:
-        query = query.filter(AuditLog.action == action)
-    if evidence_id:
-        query = query.filter(AuditLog.evidence_id == evidence_id)
-    return query.order_by(AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
+    ip_address: Optional[str] = None,
+    result: str = "success",
+) -> None:
+    """
+    Append an audit log entry. Called on every read and write.
+    Supported actions include:
+      FIR_REGISTERED, FIR_CORRECTED, FIR_STATUS_CHANGED, FIR_VIEWED,
+      DIARY_ENTRY_ADDED, DIARY_VIEWED,
+      SEIZURE_MEMO_CREATED, SEIZURE_MEMO_VIEWED,
+      PROPERTY_REGISTERED, PROPERTY_VIEWED,
+      CUSTODY_TRANSFERRED, CUSTODY_CHAIN_VIEWED,
+      PERSON_REGISTERED, PERSON_LINKED_TO_FIR, PERSON_VIEWED,
+      CHARGESHEET_CREATED, CHARGESHEET_FILED, CHARGESHEET_VIEWED,
+      COURT_PROCEEDING_ADDED, PROCEEDINGS_VIEWED,
+      BLOCKCHAIN_VERIFIED, EVIDENCE_UPLOADED, EVIDENCE_VIEWED,
+      USER_REGISTERED, USER_LOGIN
+    """
+    try:
+        from models import AuditLog
+        entry = AuditLog(
+            user_id=user_id,
+            action=action,
+            fir_id=fir_id,
+            evidence_id=evidence_id,
+            chargesheet_id=chargesheet_id,
+            details=details,
+            ip_address=ip_address,
+            result=result,
+        )
+        db.add(entry)
+        db.commit()
+        logger.debug(f"[AUDIT] {action} | user={user_id} | fir={fir_id} | result={result}")
+    except Exception as e:
+        logger.error(f"Audit log write failed: {e}")

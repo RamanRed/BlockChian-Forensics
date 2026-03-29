@@ -1,6 +1,7 @@
 """
-Blockchain Service
-Interact with the EvidenceRegistry smart contract using Web3.py
+DIRS — Digital Investigation Record System
+Blockchain Service (Generalized)
+Stores any record hash on the blockchain via the DIRSRegistry smart contract.
 """
 
 import json
@@ -16,7 +17,7 @@ _contract = None
 
 
 def connect_to_blockchain():
-    """Establish connection to blockchain node and load contract."""
+    """Establish connection to blockchain node and load DIRSRegistry contract."""
     global _web3, _contract
     try:
         from web3 import Web3
@@ -25,7 +26,6 @@ def connect_to_blockchain():
             logger.error("Failed to connect to blockchain node.")
             return None
 
-        # Load ABI
         abi_path = os.path.join(os.path.dirname(__file__), "../blockchain/abi.json")
         if not os.path.exists(abi_path):
             logger.warning("ABI file not found. Blockchain features disabled.")
@@ -36,11 +36,13 @@ def connect_to_blockchain():
 
         address = settings.CONTRACT_ADDRESS
         if not address:
-            logger.warning("Contract address not set. Blockchain features disabled.")
+            logger.warning("CONTRACT_ADDRESS not set. Blockchain features disabled.")
             return None
 
-        _contract = _web3.eth.contract(address=Web3.to_checksum_address(address), abi=abi)
-        logger.info(f"Connected to blockchain at {settings.BLOCKCHAIN_RPC_URL}")
+        _contract = _web3.eth.contract(
+            address=Web3.to_checksum_address(address), abi=abi
+        )
+        logger.info(f"Connected to DIRSRegistry at {settings.BLOCKCHAIN_RPC_URL}")
         return _web3
     except ImportError:
         logger.warning("web3 not installed. Blockchain features disabled.")
@@ -50,14 +52,20 @@ def connect_to_blockchain():
         return None
 
 
-async def store_evidence_hash(bound_data: dict) -> Optional[Dict[str, Any]]:
+async def store_record_hash(
+    record_type: str,
+    record_id: str,
+    data_hash: str,
+) -> Optional[Dict[str, Any]]:
     """
-    Store evidence hash and metadata on the blockchain.
-    Returns transaction details or None on failure.
+    Generalized blockchain write — stores ANY record hash.
+    record_type: fir | evidence | diary | seizure | custody | property | chargesheet
+    record_id:   unique string identifier (e.g. fir_number, property_number)
+    data_hash:   SHA-256 hex string of the record's canonical data
     """
     web3 = connect_to_blockchain()
     if not web3 or not _contract:
-        logger.warning("Blockchain unavailable. Skipping on-chain storage.")
+        logger.warning(f"Blockchain unavailable. Skipping {record_type}/{record_id} hash write.")
         return None
 
     try:
@@ -65,18 +73,16 @@ async def store_evidence_hash(bound_data: dict) -> Optional[Dict[str, Any]]:
         account = web3.eth.account.from_key(settings.WALLET_PRIVATE_KEY)
         nonce = web3.eth.get_transaction_count(account.address)
 
-        tx = _contract.functions.storeEvidence(
-            bound_data["file_hash"],
-            bound_data.get("metadata", {}).get("ipfs_cid", ""),
-            int(bound_data["ai_score"] * 100),
-            bound_data["ai_status"],
-            bound_data["model_version"]
+        tx = _contract.functions.storeRecordHash(
+            record_type,
+            record_id,
+            data_hash,
         ).build_transaction({
             "from": account.address,
             "nonce": nonce,
             "gas": 300000,
             "gasPrice": web3.eth.gas_price,
-            "chainId": settings.CHAIN_ID
+            "chainId": settings.CHAIN_ID,
         })
 
         signed_tx = web3.eth.account.sign_transaction(tx, settings.WALLET_PRIVATE_KEY)
@@ -86,46 +92,54 @@ async def store_evidence_hash(bound_data: dict) -> Optional[Dict[str, Any]]:
         result = {
             "tx_hash": tx_hash.hex(),
             "block_number": receipt.blockNumber,
-            "status": receipt.status
+            "status": receipt.status,
         }
-        logger.info(f"Evidence stored on blockchain: tx={result['tx_hash'][:20]}...")
+        logger.info(f"[{record_type}:{record_id}] hash stored on blockchain: tx={result['tx_hash'][:20]}...")
         return result
-
     except Exception as e:
-        logger.error(f"Blockchain store error: {e}")
+        logger.error(f"Blockchain store_record_hash error [{record_type}:{record_id}]: {e}")
         return None
 
 
+# Backward-compatible alias for evidence pipeline
+async def store_evidence_hash(bound_data: dict) -> Optional[Dict[str, Any]]:
+    """Alias retained for existing evidence upload pipeline compatibility."""
+    return await store_record_hash(
+        "evidence",
+        bound_data.get("file_hash", "unknown"),
+        bound_data.get("file_hash", ""),
+    )
+
+
 async def check_existing_hash(file_hash: str) -> bool:
-    """Check if a hash already exists on the blockchain."""
+    """Check if a hash already exists on blockchain."""
     web3 = connect_to_blockchain()
     if not web3 or not _contract:
         return False
     try:
-        return _contract.functions.evidenceExists(file_hash).call()
+        return _contract.functions.recordExists(file_hash).call()
     except Exception as e:
         logger.error(f"Blockchain check error: {e}")
         return False
 
 
-async def get_blockchain_record(file_hash: str) -> Optional[Dict[str, Any]]:
-    """Retrieve evidence record from blockchain by hash."""
+async def get_blockchain_record(data_hash: str) -> Optional[Dict[str, Any]]:
+    """Retrieve a stored record from blockchain by hash."""
     web3 = connect_to_blockchain()
     if not web3 or not _contract:
         return None
     try:
-        record = _contract.functions.getEvidence(file_hash).call()
+        record = _contract.functions.getRecord(data_hash).call()
         return {
-            "evidence_hash": record[0],
-            "ipfs_cid": record[1],
-            "ai_score": record[2] / 100.0,
-            "ai_status": record[3],
-            "model_version": record[4],
-            "timestamp": record[5],
-            "submitter": record[6]
+            "record_type": record[0],
+            "record_id":   record[1],
+            "data_hash":   record[2],
+            "timestamp":   record[3],
+            "submitter":   record[4],
+            "tx_hash":     None,  # Not stored on-chain, returned via receipt
         }
     except Exception as e:
-        logger.error(f"Blockchain get record error: {e}")
+        logger.error(f"Blockchain get_record error: {e}")
         return None
 
 
