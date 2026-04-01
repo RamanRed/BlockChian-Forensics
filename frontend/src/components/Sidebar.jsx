@@ -1,11 +1,25 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useAuth } from "../hooks/useAuth";
-import { HiOutlineViewGrid, HiOutlineCloudUpload, HiOutlineShieldExclamation, HiOutlineClipboardList, HiOutlineCog, HiOutlineLogout } from "react-icons/hi";
+import {
+  HiOutlineViewGrid,
+  HiOutlineDocumentText,
+  HiOutlineBookOpen,
+  HiOutlineArchive,
+  HiOutlineSwitchHorizontal,
+  HiOutlineUserGroup,
+  HiOutlineClipboardCheck,
+  HiOutlineScale,
+  HiOutlineShieldCheck,
+  HiOutlineClipboardList,
+  HiOutlineCog,
+  HiOutlineLogout,
+  HiOutlineShieldExclamation,
+} from "react-icons/hi";
 
 function NavItem({ href, icon, children }) {
   const router = useRouter();
-  const active = router.pathname === href;
+  const active = router.pathname.startsWith(href);
   return (
     <Link href={href} className={active ? "active" : ""}>
       <span className="nav-icon">{icon}</span>
@@ -30,29 +44,40 @@ function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-header">
-        <div className="sidebar-logo">DEP</div>
+        <div className="sidebar-logo">DIRS</div>
         <div>
-          <div className="sidebar-title">Evidence</div>
-          <div className="sidebar-subtitle">Preservation System</div>
+          <div className="sidebar-title">Investigation</div>
+          <div className="sidebar-subtitle">Record System</div>
         </div>
       </div>
 
       <div className="sidebar-section">
-        <div className="sidebar-label">Main</div>
+        <div className="sidebar-label">Overview</div>
         <NavItem href="/dashboard" icon={<HiOutlineViewGrid />}>Dashboard</NavItem>
-        <NavItem href="/upload" icon={<HiOutlineCloudUpload />}>Upload Evidence</NavItem>
 
-        {(role === "admin" || role === "investigator") && (
+        <div className="sidebar-label">Investigation</div>
+        <NavItem href="/fir" icon={<HiOutlineDocumentText />}>FIR Register</NavItem>
+        <NavItem href="/diary" icon={<HiOutlineBookOpen />}>Case Diary</NavItem>
+        <NavItem href="/seizure" icon={<HiOutlineArchive />}>Seizure & Property</NavItem>
+        <NavItem href="/custody" icon={<HiOutlineSwitchHorizontal />}>Chain of Custody</NavItem>
+        <NavItem href="/persons" icon={<HiOutlineUserGroup />}>Person Register</NavItem>
+
+        {["io", "sp", "dsp", "admin"].includes(role) && (
           <>
-            <div className="sidebar-label">Investigation</div>
-            <NavItem href="/quarantine" icon={<HiOutlineShieldExclamation />}>Quarantine</NavItem>
+            <div className="sidebar-label">Legal</div>
+            <NavItem href="/chargesheet" icon={<HiOutlineClipboardCheck />}>Charge Sheet</NavItem>
           </>
         )}
 
-        {["admin", "investigator", "auditor"].includes(role) && (
+        <div className="sidebar-label">Court & Verify</div>
+        <NavItem href="/court" icon={<HiOutlineScale />}>Court Portal</NavItem>
+        <NavItem href="/verify" icon={<HiOutlineShieldCheck />}>Verify Hash</NavItem>
+
+        {["admin", "auditor", "sp"].includes(role) && (
           <>
             <div className="sidebar-label">Monitoring</div>
             <NavItem href="/audit" icon={<HiOutlineClipboardList />}>Audit Logs</NavItem>
+            <NavItem href="/quarantine" icon={<HiOutlineShieldExclamation />}>Quarantine</NavItem>
           </>
         )}
 
@@ -69,7 +94,7 @@ function Sidebar() {
           <div className="sidebar-user-avatar">{initials}</div>
           <div>
             <div className="sidebar-user-name">{user?.name || "User"}</div>
-            <div className="sidebar-user-role">{user?.role || ""}</div>
+            <div className="sidebar-user-role">{user?.role?.toUpperCase() || ""}</div>
           </div>
           <HiOutlineLogout style={{ marginLeft: "auto", color: "var(--sidebar-text)", fontSize: "1.1rem" }} />
         </div>

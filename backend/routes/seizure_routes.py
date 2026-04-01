@@ -29,6 +29,31 @@ from utils.logger import setup_logger
 router = APIRouter()
 logger = setup_logger(__name__)
 
+@router.get("/memo", response_model=List[SeizureMemoResponse])
+async def list_seizure_memos(
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List all seizure memos."""
+    memos = db.query(SeizureMemo).offset(offset).limit(limit).all()
+    return memos
+
+@router.get("/property", response_model=List[PropertyRegisterResponse])
+async def list_properties(
+    seizure_memo_id: Optional[int] = None,
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """List all registered properties."""
+    query = db.query(PropertyRegister)
+    if seizure_memo_id is not None:
+        query = query.filter(PropertyRegister.seizure_memo_id == seizure_memo_id)
+    return query.offset(offset).limit(limit).all()
+
 
 @router.post("/memo", response_model=SeizureMemoResponse, status_code=status.HTTP_201_CREATED)
 async def create_seizure_memo(

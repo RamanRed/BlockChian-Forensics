@@ -6,7 +6,7 @@ Cross-case intelligence: same person in multiple FIRs is flagged.
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 
 from database import get_db
 from models import User, Person, CasePersonMapping, FIR
@@ -17,6 +17,17 @@ from utils.logger import setup_logger
 
 router = APIRouter()
 logger = setup_logger(__name__)
+
+@router.get("/", response_model=List[PersonResponse])
+async def list_persons(
+    limit: int = 100,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get all persons in the system."""
+    persons = db.query(Person).offset(offset).limit(limit).all()
+    return persons
 
 
 @router.post("/", response_model=PersonResponse, status_code=status.HTTP_201_CREATED)

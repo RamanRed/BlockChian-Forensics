@@ -1,10 +1,10 @@
 import ProtectedRoute from "../src/components/ProtectedRoute";
-import Quarantine from "../src/pages/Quarantine";
+import QuarantinePage from "../src/pages/Quarantine";
 
-export default function QuarantinePage() {
+export default function QuarantinePageRoute() {
   return (
-    <ProtectedRoute roles={["admin", "investigator"]}>
-      <Quarantine />
+    <ProtectedRoute roles={["admin", "auditor", "sp"]}>
+      <QuarantinePage />
     </ProtectedRoute>
   );
 }

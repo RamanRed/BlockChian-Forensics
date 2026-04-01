@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import authService from "../services/authService";
 import { useAuth } from "../hooks/useAuth";
-import { HiOutlineLockClosed } from "react-icons/hi";
+import { HiOutlineShieldCheck } from "react-icons/hi";
 
 function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -22,7 +22,13 @@ function Login() {
       router.push("/dashboard");
     } catch (err) {
       const detail = err.response?.data?.detail;
-      setError(typeof detail === "string" ? detail : Array.isArray(detail) ? detail.map((e) => e.msg).join(", ") : "Login failed");
+      setError(
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((e) => e.msg).join(", ")
+          : "Login failed. Check credentials."
+      );
     } finally {
       setLoading(false);
     }
@@ -32,20 +38,43 @@ function Login() {
     <section className="centered-page">
       <form className="card auth-card" onSubmit={handleSubmit}>
         <div className="auth-logo">
-          <HiOutlineLockClosed />
+          <HiOutlineShieldCheck />
         </div>
-        <h2>Welcome Back</h2>
-        <p className="auth-subtitle">Sign in to your evidence preservation account</p>
+        <h2>DIRS Login</h2>
+        <p className="auth-subtitle">
+          Digital Investigation Record System
+          <br />
+          <span style={{ fontSize: "0.78rem", color: "var(--text-muted)" }}>
+            CrPC-Aligned · Blockchain-Backed · Tamper-Proof
+          </span>
+        </p>
 
         <label>Email Address</label>
-        <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@example.com" required />
+        <input
+          type="email"
+          value={form.email}
+          onChange={(e) => setForm({ ...form, email: e.target.value })}
+          placeholder="you@police.gov.in"
+          required
+          autoFocus
+        />
 
         <label>Password</label>
-        <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Enter your password" required />
+        <input
+          type="password"
+          value={form.password}
+          onChange={(e) => setForm({ ...form, password: e.target.value })}
+          placeholder="Enter your password"
+          required
+        />
 
         {error && <p className="error-text">{error}</p>}
-        <button className="btn" type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign In"}</button>
-        <p>Don&apos;t have an account? <Link href="/register">Create one</Link></p>
+        <button className="btn" type="submit" disabled={loading}>
+          {loading ? "Authenticating…" : "Sign In to DIRS"}
+        </button>
+        <p>
+          Don&apos;t have an account? <Link href="/register">Register</Link>
+        </p>
       </form>
     </section>
   );

@@ -1,0 +1,211 @@
+/* ─── Form Card ─── */
+.form-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 1.75rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1.5rem;
+}
+.form-card h3 {
+  font-size: 1rem;
+  color: var(--text);
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--line-light);
+}
+
+/* ─── Form Row (flex grid) ─── */
+.form-row {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.form-row .form-group {
+  flex: 1;
+  min-width: 180px;
+}
+
+/* ─── Form Group ─── */
+.form-group {
+  margin-bottom: 1rem;
+}
+.form-group label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+.form-group .input,
+.form-group input,
+.form-group select,
+.form-group textarea {
+  margin-bottom: 0;
+}
+
+/* ─── Input alias ─── */
+.input {
+  width: 100%;
+  padding: 0.7rem 0.85rem;
+  border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  color: var(--text);
+  background: var(--card);
+  transition: border-color var(--transition), box-shadow var(--transition);
+  outline: none;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.input:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+.input::placeholder { color: var(--text-muted); }
+
+/* ─── Form Section Label ─── */
+.form-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 1.5rem 0 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--primary-light);
+}
+.form-section-label:first-child { margin-top: 0; }
+
+/* ─── Evidence / Info Card ─── */
+.evidence-card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition), border-color var(--transition);
+}
+.evidence-card:hover {
+  box-shadow: var(--shadow);
+  border-color: var(--primary);
+}
+
+/* ─── Badge color extensions ─── */
+.badge-blue   { background: var(--info-light);    color: var(--info); }
+.badge-green  { background: var(--success-light); color: var(--success); }
+.badge-red    { background: var(--danger-light);  color: var(--danger); }
+.badge-yellow { background: var(--warn-light);    color: var(--warn); }
+.badge-purple { background: var(--primary-light); color: var(--primary); }
+.badge-gray   { background: #f1f5f9;              color: #64748b; }
+
+/* ─── Detail / Info section ─── */
+.info-block {
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.info-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+.info-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  word-break: break-all;
+}
+
+/* ─── Hash display ─── */
+.hash-mono {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  word-break: break-all;
+  background: var(--bg);
+  padding: 0.45rem 0.75rem;
+  border-radius: var(--radius-xs);
+  border: 1px dashed var(--line);
+}
+
+/* ─── Timeline for diary/custody ─── */
+.timeline {
+  position: relative;
+  padding-left: 1.5rem;
+}
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--line) 100%);
+  border-radius: 2px;
+}
+.timeline-item {
+  position: relative;
+  margin-bottom: 1.25rem;
+}
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -1.3rem;
+  top: 0.45rem;
+  width: 10px;
+  height: 10px;
+  background: var(--primary);
+  border-radius: 50%;
+  border: 2px solid var(--card);
+  box-shadow: 0 0 0 2px var(--primary);
+}
+
+/* ─── Verify result states ─── */
+.verify-success {
+  background: rgba(16, 185, 129, 0.07);
+  border: 1.5px solid var(--success);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+}
+.verify-fail {
+  background: rgba(244, 63, 94, 0.07);
+  border: 1.5px solid var(--danger);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem;
+}
+
+/* ─── Court public page ─── */
+.court-hero {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+.court-hero h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--primary), var(--info));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Scroll fix for diary/custody panels ─── */
+.panel-scroll {
+  max-height: 65vh;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+.panel-scroll::-webkit-scrollbar { width: 4px; }
+.panel-scroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 2px; }
+
+/* ─── Responsive fix for form-row ─── */
+@media (max-width: 768px) {
+  .form-row { flex-direction: column; }
+  .form-card { padding: 1.25rem; }
+}

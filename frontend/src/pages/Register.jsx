@@ -10,7 +10,7 @@ function Register() {
     email: "",
     password: "",
     confirmPassword: "",
-    role: "investigator"
+    role: "io"
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -64,9 +64,12 @@ function Register() {
 
         <label>Role</label>
         <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })}>
-          <option value="investigator">Investigator</option>
+          <option value="io">IO — Investigating Officer</option>
+          <option value="sp">SP — Superintendent of Police</option>
+          <option value="dsp">DSP — Deputy SP</option>
+          <option value="cfsl">CFSL — Forensic Scientist</option>
+          <option value="court">Court — Judicial Officer</option>
           <option value="auditor">Auditor</option>
-          <option value="admin">Admin</option>
         </select>
 
         {error && <p className="error-text">{error}</p>}

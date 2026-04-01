@@ -1,0 +1,1957 @@
+DIRS — Digital Investigation Record System  |  Developer README
+
+🚨 DIRS
+
+Digital Investigation Record System
+
+Complete Developer README
+
+Rebuild · Modify · Extend · Replace
+
+Process-Faithful  |  Blockchain-Backed  |  CrPC-Aligned  |  Modular Architecture
+
+
+
+
+
+Version 1.0  |  Architecture: Modular Monolith + Blockchain Overlay  |  Jurisdiction: India (CrPC-Aligned)
+
+
+
+1. Purpose & Philosophy
+
+DIRS is not merely a database application. It is a legally-faithful digital mirror of Indian police investigation workflows — enhanced with cryptographic integrity so that every record becomes court-verifiable, tamper-evident, and fully traceable.
+
+This README is your complete guide to rebuilding, modifying, or extending DIRS. Every section explains WHAT a feature does, WHY it exists legally or operationally, HOW it connects to other modules, and HOW to replace or upgrade it as technology evolves.
+
+1.1 Core Design Tenets
+
+Process Fidelity — Mirrors actual CrPC workflows. No renaming of legal concepts to generic IT terms.
+
+Append-Only by Default — No record is ever silently overwritten. All changes are versioned and auditable.
+
+Separation of Concerns — Database stores data; blockchain stores proof; AI layer provides analysis.
+
+Modularity — Every subsystem (blockchain adapter, AI module, auth layer, DB driver) can be replaced without touching the others.
+
+Legal Admissibility — Every design choice traces back to a legal requirement (CrPC, IPC, UAPA, IT Act 2000).
+
+Zero-Trust Audit — Even internal police users are logged and hashed. No privileged silent access.
+
+
+
+Legal Anchor
+
+All data models derive from real CrPC provisions: FIR (S.154), Case Diary (S.172), Charge Sheet (S.173). This is not cosmetic naming — it determines admissibility in court. Changing field names to generic IT equivalents is a legal design error.
+
+
+
+2. System Architecture Overview
+
+DIRS is built as a four-layer architecture. Each layer has a single responsibility and communicates with adjacent layers through well-defined interfaces — making any layer independently replaceable without affecting the others.
+
+2.1 Four-Layer Architecture
+
+Layer 4  AI / Analysis Plane  (Optional, Replaceable)
+
+         Deepfake detection  |  Document classification  |  OCR
+
+─────────────────────────────────────────────────────────────────
+
+Layer 3  Blockchain Integrity Plane
+
+         Hash anchoring  |  Tamper detection  |  Court verification
+
+─────────────────────────────────────────────────────────────────
+
+Layer 2  Data Persistence Plane
+
+         PostgreSQL  |  Append-only writes  |  Audit log
+
+─────────────────────────────────────────────────────────────────
+
+Layer 1  Process / Business Logic Plane
+
+         FIR  |  Case Diary  |  Evidence  |  Charge Sheet  |  Court
+
+
+
+Each layer exposes a clean interface to layers above and below.
+
+Swapping any layer requires only implementing that layer's interface.
+
+
+
+2.2 Investigation Workflow — End-to-End
+
+Complaint Received
+
+      |
+
+      v
+
+[FIR Registration]           ---> Blockchain hash stored
+
+      |
+
+      v
+
+[Case Diary Entry]           ---> Blockchain hash stored (append-only)
+
+      |
+
+      |---> [Seizure Memo]   ---> Blockchain hash stored
+
+      |           |
+
+      |           v
+
+      |     [Property Register]  ---> Blockchain hash stored
+
+      |           |
+
+      |           v
+
+      |     [Chain of Custody]   ---> Every movement hashed
+
+      |
+
+      v
+
+[Charge Sheet S.173]         ---> Blockchain hash stored
+
+      |
+
+      v
+
+[Court Proceedings]          ---> Verification: record -> hash -> compare chain
+
+      |
+
+      v
+
+[Supplementary Report]  (if new evidence emerges after charge sheet)
+
+      |
+
+      v
+
+[Case Disposal]
+
+
+
+2.3 Component Interaction
+
+API Gateway / REST Layer
+
+   |
+
+   |-- Auth Middleware (JWT + RBAC + Case Assignment Check)
+
+   |
+
+   |-- Business Logic Services
+
+   |      |-- FIR Service
+
+   |      |-- Case Diary Service
+
+   |      |-- Evidence Service (Seizure + Property + Custody)
+
+   |      |-- Charge Sheet Service
+
+   |      +-- Court Service
+
+   |
+
+   |-- Audit Hook (fires on EVERY write and EVERY read)
+
+   |      +-- Audit Log Table
+
+   |
+
+   |-- Blockchain Adapter (pluggable via interface)
+
+   |      |-- sha256(record) -> hash
+
+   |      +-- write hash to chain
+
+   |
+
+   +-- AI Adapter (optional, pluggable via interface)
+
+          +-- deepfake / OCR / classification
+
+
+
+3. Data Models — Complete Reference
+
+Every data model below is based on a real legal document used in Indian criminal investigation. Fields are named using real police and legal terminology. Do not rename fields to generic IT terms — doing so breaks the legal traceability the system is built on.
+
+3.1 FIR — First Information Report (Section 154 CrPC)
+
+MODULE: FIR_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+What it is and why it exists
+
+The FIR is the legal starting point of every criminal case in India. It converts a complaint into an officially recognized investigation. Without a valid FIR, police have no lawful authority to investigate, arrest, or collect evidence. The FIR defines the scope of the entire case — every later record (diary, evidence, charge sheet) must trace back to it.
+
+Legal basis
+
+Section 154 CrPC — Mandates registration of FIR on receipt of cognizable offence information.
+
+Once registered, FIR is read aloud, signed by complainant, and cannot be altered — only corrected via formal entry.
+
+Refusal to register FIR is a criminal offence by the officer under Section 166A IPC.
+
+Data Model
+
+Field
+
+Description / Purpose
+
+fir_id
+
+UUID primary key. Internal system identifier.
+
+fir_number
+
+Official FIR number assigned by police station (e.g., FIR/2024/001).
+
+police_station_name
+
+Name of the registering police station. Links to station master table.
+
+district_name / state_name
+
+Geographic jurisdiction. Essential for inter-district transfers and court jurisdiction.
+
+date_of_registration
+
+Exact timestamp. Any registration delay must be legally justified via correction entry.
+
+complainant_name / address
+
+Primary complainant details. Links to PERSON table.
+
+accused_details_initial
+
+Initial accused info. May be partial (unknown person). Updated only via FIR_CORRECTION.
+
+place_of_occurrence
+
+Where offence occurred. May differ from the police station's jurisdiction.
+
+date_of_occurrence / time
+
+When offence occurred. Distinct from registration date. Used to compute limitation periods.
+
+offence_sections
+
+Array: IPC / UAPA / NDPS sections. Determines jurisdiction and investigation agency.
+
+brief_facts_of_case
+
+Narrative facts as stated by complainant. Immutable after registration.
+
+fir_status
+
+Enum: registered | under_investigation | charge_sheeted | closed | transferred.
+
+version_number
+
+Auto-increment on any FIR_CORRECTION entry. Full version history maintained.
+
+
+
+Immutability Rule
+
+The FIR record is NEVER overwritten. Any correction (wrong name, date, section) is recorded as a FIR_CORRECTION_ENTRY — a separate append-only record referencing the original. The blockchain hash of the original FIR remains permanently verifiable.
+
+Relationships
+
+FIR -> CASE_DIARY_ENTRY (one-to-many): Every diary entry references this FIR ID.
+
+FIR -> SEIZURE_MEMO (one-to-many): All evidence collected is tied to this FIR.
+
+FIR -> CHARGE_SHEET (one-to-one or one-to-few): Final report closes this FIR.
+
+FIR -> CASE_PERSON_MAPPING (one-to-many): All persons (accused, witness, complainant) linked here.
+
+How to Replace or Extend
+
+GPS coordinates: add place_lat / place_lng fields. No other module changes needed.
+
+CCTNS integration: add cctns_fir_id as an external reference field. Async sync job handles push.
+
+Multilingual FIR: add language_code field + fir_text_vernacular for regional language text.
+
+Biometric complainant verification: add biometric_verified boolean + biometric_ref field.
+
+
+
+3.2 Case Diary — Investigation Journal (Section 172 CrPC)
+
+MODULE: CASE_DIARY_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+What it is and why it exists
+
+The Case Diary is the Investigating Officer's chronological daily log. It records every action taken — every person visited, every statement recorded, every piece of evidence collected, every observation made. Courts use the Case Diary to evaluate whether the investigation was conducted properly. Gaps in the diary create reasonable doubt. It is the chronological truth of the investigation.
+
+Legal basis
+
+Section 172 CrPC — IO must maintain Case Diary. Courts can inspect it. Defence cannot access it.
+
+Section 173 CrPC — Charge Sheet must accurately summarize the Case Diary.
+
+Data Model
+
+Field
+
+Description / Purpose
+
+diary_entry_id
+
+UUID. Each entry is independent and immutable once created.
+
+fir_id
+
+Foreign key to FIR. Every diary entry belongs to exactly one FIR.
+
+investigating_officer_id
+
+Officer who made this entry. Links to OFFICER table.
+
+diary_date / diary_time
+
+Date and time of entry. Must be chronological. System enforces ordering.
+
+place_visited
+
+Where the IO went. Crucial for establishing investigation diligence.
+
+action_taken
+
+Detailed narrative: arrests made, searches conducted, lab samples sent.
+
+persons_examined
+
+References to PERSON records examined during this diary period.
+
+statements_recorded
+
+References to STATEMENT records created during this period.
+
+evidence_collected_reference
+
+References to SEIZURE_MEMO records created on this diary date.
+
+next_step_of_investigation
+
+Planned next action. Creates continuity between diary entries.
+
+digital_signature
+
+Officer digital signature on the entry. Non-repudiation.
+
+blockchain_ref
+
+Hash reference stored on blockchain when this entry was created.
+
+
+
+Append-Only
+
+No Case Diary entry can ever be edited or deleted. If an entry contains an error, a new entry is appended with a CORRECTION flag referencing the erroneous entry ID. The original entry remains in the database and on the blockchain permanently.
+
+Use Cases
+
+IO visits a suspect home: creates diary entry with place_visited and action_taken.
+
+IO records a witness statement: creates STATEMENT record + references it in diary entry.
+
+IO sends digital evidence to CFSL: diary entry records dispatch; PROPERTY_MOVEMENT records the physical transfer.
+
+Court asks for investigation timeline: Case Diary entries presented chronologically, each blockchain-verifiable.
+
+How to Replace or Extend
+
+Voice-to-text diary: add audio_transcript_id field. Audio stored in separate media store.
+
+Supervisor approval workflow: add supervisor_approved_by and supervisor_approved_at fields.
+
+Offline entry support: entries queued locally and synced; blockchain write happens on sync.
+
+
+
+3.3 Seizure Memo — Evidence Collection Record
+
+MODULE: SEIZURE_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+What it is and why it exists
+
+A Seizure Memo is created at the exact moment evidence is physically collected — a contemporaneous document, made on the spot in the presence of independent witnesses. It proves the evidence's origin, collection method, and chain of handover from the first moment. Without a proper Seizure Memo, evidence can be challenged and rejected in court.
+
+Data Model
+
+Field
+
+Description / Purpose
+
+seizure_id
+
+UUID. Links to PROPERTY_REGISTER.
+
+fir_id
+
+Which FIR this seizure relates to.
+
+seizure_memo_number
+
+Official memo number (e.g., SM/2024/FIR001/01).
+
+date_of_seizure / time
+
+Exact timestamp. Verified against Case Diary entry of same date.
+
+place_of_seizure
+
+Address / location. May include GPS coordinates.
+
+seized_by_officer_id
+
+Officer who executed the seizure. Must be IO or delegated officer.
+
+witness_1 / witness_2
+
+Two independent witnesses required by law. Links to PERSON table.
+
+description_of_property
+
+Detailed: brand, model, colour, serial number, condition.
+
+seal_number
+
+Official police seal applied to evidence bag. Matches PROPERTY_REGISTER entry.
+
+panchnama_reference
+
+Reference to Panchnama document if applicable.
+
+
+
+Court Risk
+
+A Seizure Memo without two independent witnesses, or with seal number mismatch against the Property Register, is a serious evidentiary defect. The system validates these constraints on creation and logs a warning if witnesses share the same household or organization.
+
+How to Replace or Extend
+
+GPS-stamped location: add gps_lat / gps_lng / gps_accuracy fields with device values.
+
+Photo capture: add photo_ids[] array referencing MEDIA_STORE records.
+
+QR-coded evidence tags: add qr_code_hash field; tag printed and attached to physical item.
+
+
+
+3.4 Property Register — Evidence Inventory (Malkhana)
+
+MODULE: PROPERTY_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+What it is and why it exists
+
+The Property Register (Malkhana Register) is the official inventory of all seized items in police custody. It is the authoritative record of what evidence exists, where it is stored, and in what condition. Courts routinely request the Malkhana Register entry when evaluating evidence authenticity. Any discrepancy between the Seizure Memo description and the Property Register description is a red flag.
+
+Data Model
+
+Field
+
+Description / Purpose
+
+property_id
+
+UUID. Primary key for this evidence item.
+
+fir_id / seizure_id
+
+Links evidence to the specific FIR and Seizure Memo that created it.
+
+property_description
+
+Physical description. Must match Seizure Memo description exactly.
+
+property_type
+
+Enum: weapon | document | digital | currency | narcotics | other.
+
+hash_value
+
+SHA-256 of digital evidence (files, images, videos). Empty for physical items.
+
+storage_location
+
+Physical location: Malkhana Room A, Shelf 3, Box 12.
+
+malkhana_entry_number
+
+Official register entry number. Cross-references physical register.
+
+current_status
+
+Enum: in_malkhana | with_court | at_forensic_lab | returned | destroyed.
+
+condition_on_receipt
+
+Condition assessment: sealed | damaged | intact. Timestamped.
+
+destruction_order_ref
+
+If evidence destroyed post-trial, references court destruction order.
+
+Digital Evidence Handling
+
+Original digital item is write-blocked and forensic clone created.
+
+SHA-256 hash generated from original and clone — must match.
+
+Both hashes stored in hash_value as JSON: { original: '...', clone: '...' }.
+
+Hash also written to blockchain at creation.
+
+Any future access to clone triggers hash re-verification before use.
+
+
+
+3.5 Property Movement Register — Chain of Custody
+
+MODULE: CHAIN_OF_CUSTODY_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+What it is and why it exists
+
+Chain of Custody is the documented, unbroken trail of who possessed evidence, when, and why — from seizure to court presentation. Any break allows defence to argue evidence was tampered with or substituted. In high-profile cases, chain of custody is the most commonly attacked element of the prosecution.
+
+Data Model
+
+Field
+
+Description / Purpose
+
+movement_id
+
+UUID. Each transfer is a separate immutable record.
+
+property_id
+
+Links to PROPERTY_REGISTER.
+
+from_location
+
+Origin: Malkhana, Forensic Lab, Court Room, etc.
+
+to_location
+
+Destination.
+
+handed_over_by
+
+Officer releasing the evidence. Digital signature required.
+
+received_by
+
+Officer receiving the evidence. Digital signature required.
+
+date_time_of_transfer
+
+Exact timestamp of handover.
+
+purpose_of_transfer
+
+Enum: forensic_analysis | court_presentation | expert_examination | return.
+
+seal_condition
+
+Enum: intact | broken | resealed. Broken seals trigger investigation.
+
+acknowledgment_receipt_id
+
+Reference to signed acknowledgment document.
+
+
+
+Integrity Rule
+
+Every movement record is immediately hashed and written to the blockchain. If a court asks who had this evidence on a specific date, the blockchain-verified movement log provides a cryptographically provable answer.
+
+How to Replace or Extend
+
+RFID tracking: add rfid_tag_id field. IoT readers at Malkhana gates auto-create movement records.
+
+Forensic lab integration: add lab_case_number field. API webhook from lab auto-updates status.
+
+
+
+3.6 Person Register — All Case Persons
+
+MODULE: PERSON_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+What it is and why it exists
+
+Every individual connected to a case — complainant, accused, witness, expert — is registered in the Person Register. This enables consistent identity across all case documents, prevents duplication, and enables cross-case intelligence (the same person appearing in multiple FIRs as a witness across unrelated cases flags potential coached witnesses).
+
+PERSON Table
+
+Field
+
+Description / Purpose
+
+person_id
+
+UUID. Unique per individual across the entire system.
+
+name / father_name
+
+Full legal name and father name — standard Indian identification practice.
+
+address
+
+Current address. Versioned if updated.
+
+identification_details
+
+Aadhar, PAN, Passport, Voter ID — encrypted at rest.
+
+biometric_ref
+
+Optional reference to biometric record. Stored in separate secure store.
+
+criminal_history_flag
+
+Boolean. If true, links to previous FIR records via CASE_PERSON_MAPPING.
+
+CASE_PERSON_MAPPING Table
+
+Field
+
+Description / Purpose
+
+fir_id / person_id
+
+The FIR and person being linked.
+
+role
+
+Enum: complainant | accused | witness | expert | victim | unknown.
+
+role_notes
+
+E.g., 'approver (turned state witness)', 'juvenile', 'declared absconder'.
+
+added_by_officer_id
+
+Who added this person to the case.
+
+added_at
+
+Timestamp of mapping creation.
+
+
+
+3.7 Charge Sheet — Final Report (Section 173 CrPC)
+
+MODULE: CHARGE_SHEET_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+What it is and why it exists
+
+The Charge Sheet is the structured conclusion of the entire investigation, submitted to the Magistrate's Court. It lists all accused persons, witnesses, evidence, and the IO's legal conclusions. Once filed, the court takes cognizance of the offence. A weak or incomplete Charge Sheet can result in accused being discharged before trial even begins.
+
+Legal basis
+
+Section 173(2) CrPC — Charge Sheet must be submitted within 60 days (custody) or 90 days of FIR.
+
+Section 173(5) CrPC — All statements, documents, and extracts must be forwarded with Charge Sheet.
+
+Data Model
+
+Field
+
+Description / Purpose
+
+chargesheet_id
+
+UUID.
+
+fir_id
+
+Parent FIR.
+
+chargesheet_number
+
+Official number assigned on filing.
+
+date_of_filing
+
+Date filed with court. Must be within statutory period.
+
+investigating_officer_id
+
+IO who completed investigation.
+
+accused_list
+
+Array of PERSON IDs with final charges against each accused.
+
+list_of_witnesses
+
+Array of PERSON IDs to be examined in court.
+
+list_of_documents
+
+Array of document references (statements, reports, orders).
+
+list_of_material_objects
+
+Array of PROPERTY IDs — physical evidence for court.
+
+conclusion_of_investigation
+
+IO legal conclusion: sufficient_evidence | insufficient_evidence.
+
+court_name
+
+Court where filed.
+
+public_prosecutor_assigned
+
+PP handling the case. Links to PERSON table.
+
+statutory_deadline
+
+Computed: FIR date + 60/90 days. Alert triggers at day 45 and 55.
+
+
+
+Deadline Alert
+
+The system auto-computes the statutory filing deadline based on FIR date and custody status. Supervisors receive alerts at 45-day and 55-day marks. Late filings are logged with a mandatory reason code and supervisor acknowledgment.
+
+Supplementary Charge Sheet
+
+When new evidence or new accused persons are discovered after the initial Charge Sheet, a SUPPLEMENTARY_REPORT is filed. It references the original chargesheet_id and is independently hashed and blockchain-verified.
+
+Field
+
+Description / Purpose
+
+report_id / fir_id
+
+UUID and parent FIR.
+
+reference_chargesheet_id
+
+Original Charge Sheet this supplements.
+
+additional_evidence
+
+New evidence discovered post filing.
+
+additional_accused
+
+New accused persons identified.
+
+date_of_submission / remarks
+
+When filed and why supplementary report was needed.
+
+
+
+4. Blockchain Integrity Layer
+
+MODULE: BLOCKCHAIN_ADAPTER_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+The Blockchain Layer is the cryptographic trust anchor. It does NOT replace the database. It does NOT store full records. Its single purpose: prove that a specific database record was created at a specific time and has never been altered since.
+
+4.1 What the Blockchain Stores
+
+{
+
+  "record_type": "FIR | CASE_DIARY | PROPERTY | CHARGE_SHEET | MOVEMENT",
+
+  "record_id":   "uuid-of-the-database-record",
+
+  "action":      "CREATE | UPDATE | VIEW",
+
+  "data_hash":   "sha256-hex-string-of-full-record-json",
+
+  "timestamp":   "2024-01-15T10:30:00Z",
+
+  "user_id":     "officer-uuid",
+
+  "station_id":  "police-station-uuid",
+
+  "chain_id":    "previous-blockchain-record-id"
+
+}
+
+4.2 Verification Flow
+
+VERIFY(record_id):
+
+  1. Fetch record from database  ->  record_json
+
+  2. Compute sha256(record_json) ->  computed_hash
+
+  3. Fetch blockchain entry for record_id -> stored_hash
+
+  4. IF computed_hash == stored_hash:
+
+         RESULT: VERIFIED  (record is untampered)
+
+     ELSE:
+
+         RESULT: TAMPERING DETECTED
+
+         Log forensic alert
+
+         Notify supervisor immediately
+
+         Freeze record pending internal inquiry
+
+4.3 Blockchain Adapter Interface (Pluggable)
+
+interface BlockchainAdapter {
+
+  writeHash(recordType, recordId, hash, metadata): Promise<TxId>
+
+  verifyHash(recordId, hash): Promise<VerifyResult>
+
+  getAuditTrail(recordId): Promise<TrailEntry[]>
+
+}
+
+
+
+// To swap implementations:
+
+// 1. Implement this interface
+
+// 2. Update dependency injection config
+
+// 3. Run hash migration to re-anchor existing records
+
+// No business logic changes required
+
+
+
+4.4 Blockchain Options Comparison
+
+Implementation
+
+Best For
+
+Trade-offs
+
+Hyperledger Fabric
+
+Government / permissioned networks
+
+Complex setup, high control
+
+Ethereum (private)
+
+Auditability + smart contracts
+
+Operational cost, speed
+
+Polygon / L2
+
+Low cost + public verifiability
+
+Less control over nodes
+
+IPFS + Content Hash
+
+Document hash anchoring
+
+Not a true blockchain
+
+Simple Merkle DB
+
+Air-gapped / no network
+
+No external verifiability
+
+
+
+4.5 Hash Computation
+
+import hashlib, json
+
+
+
+def compute_record_hash(record: dict) -> str:
+
+    # Canonical: sort keys, no whitespace, UTF-8
+
+    canonical = json.dumps(record, sort_keys=True, separators=(',', ':'))
+
+    return hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+
+
+
+# CRITICAL: The canonical form MUST be stable across versions
+
+# Store canonical form alongside hash for future re-verification
+
+# Never include timestamp or session fields in the hashed record
+
+
+
+5. Access Control and Role System
+
+MODULE: AUTH_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+Access control in DIRS reflects the real-world information hierarchy in Indian police investigations. It is investigation-role-based access control (IRBAC): permissions are tied to both the user's role AND their assignment to the specific case.
+
+5.1 Role Hierarchy
+
+Role
+
+Access Level
+
+Operations Permitted
+
+Director General (DG)
+
+System Admin (Read)
+
+Full read + audit. Cannot write investigation records.
+
+Station House Officer
+
+Supervisory Write
+
+Register FIR, review diary, approve charge sheet.
+
+Investigating Officer
+
+Operational Write
+
+Add diary entries, create seizure memos, file charge sheet.
+
+Duty Officer
+
+Limited Write
+
+Register FIR only. Cannot add diary entries.
+
+Forensic Officer
+
+Evidence Read/Write
+
+View/update property register. No FIR narrative access.
+
+Court (Magistrate)
+
+Read-Only — All
+
+View all records for their court. Verify blockchain hashes.
+
+Public Prosecutor
+
+Read-Only — Case
+
+View assigned case records. No ongoing diary access.
+
+Defence Lawyer
+
+Limited Read
+
+FIR, Charge Sheet, evidence list ONLY. No Case Diary ever.
+
+Complainant
+
+Read-Only — Own FIR
+
+View their FIR status and final disposition only.
+
+Public
+
+Status Only
+
+FIR acknowledgment, status check by token.
+
+
+
+Section 172 CrPC Hard Restriction
+
+Case Diary is NEVER accessible to Defence Lawyers. This is a hard-coded legal restriction, not a configurable permission. The system raises a legal_restriction error (not a generic 403) when a defence lawyer role attempts to access diary records. This rule cannot be overridden by any admin.
+
+5.2 Authorization Logic
+
+def authorize(user_role, action, record_type, fir_id):
+
+    # Check 1: Role-based permission matrix
+
+    if not RBAC_MATRIX[user_role][record_type][action]:
+
+        raise PermissionDenied()
+
+
+
+    # Check 2: Case-level assignment (officers only assigned cases)
+
+    if action in ['WRITE', 'READ_RESTRICTED']:
+
+        if not is_user_assigned_to_case(user.id, fir_id):
+
+            raise CaseNotAssigned()
+
+
+
+    # Check 3: Hard legal restrictions (cannot be configured away)
+
+    if user_role == 'DEFENCE_LAWYER' and record_type == 'CASE_DIARY':
+
+        raise LegalRestriction('S.172 CrPC - Case Diary not accessible to defence')
+
+5.3 How to Replace or Extend
+
+Government LDAP / SSO: replace JWT issuer with LDAP adapter. RBAC_MATRIX remains unchanged.
+
+Biometric login: add biometric_verified flag to session token. Write access gated on biometric confirmation.
+
+Court e-authentication: integrate with eCourts API for judge credential verification.
+
+Aadhar-based OTP: replace password auth with Aadhar OTP flow. Same JWT issued on success.
+
+
+
+6. Audit and Logging System
+
+MODULE: AUDIT_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+Every single action in DIRS — reads, writes, failed access attempts, verifications — is logged in the Audit Log. The Audit Log itself is append-only and blockchain-hashed, making it tamper-evident. This is the system's primary defence against insider threats.
+
+6.1 Audit Log Schema
+
+Field
+
+Description / Purpose
+
+audit_id
+
+UUID.
+
+user_id / user_role
+
+Who performed the action.
+
+action_performed
+
+Enum: CREATE | READ | UPDATE | VERIFY | FAILED_ACCESS | EXPORT.
+
+record_type
+
+Which module was accessed (FIR, CASE_DIARY, PROPERTY, etc.).
+
+record_id
+
+Which specific record was accessed.
+
+timestamp
+
+UTC timestamp. Immutable.
+
+old_value_hash
+
+SHA-256 of record before change (for UPDATE actions).
+
+new_value_hash
+
+SHA-256 of record after change (for UPDATE actions).
+
+ip_address
+
+Source IP of the request.
+
+device_fingerprint
+
+Browser/app fingerprint for session correlation.
+
+blockchain_write_id
+
+ID of blockchain entry created for this audit event.
+
+6.2 What is Automatically Logged
+
+Every FIR creation, correction, and status change.
+
+Every Case Diary entry creation — individual entries, not just session logins.
+
+Every evidence access — even read-only views: who saw what evidence and when.
+
+Every failed access attempt with the specific reason code.
+
+Every blockchain verification check and its pass/fail result.
+
+Every charge sheet creation, submission, and access event.
+
+Every data export or print event — with the printed content's hash.
+
+Every system administrator action including configuration changes.
+
+6.3 Retention Policy
+
+Retention Rules (configurable per deployment):
+
+
+
+  Active case records:    INDEFINITE (until case disposal order from court)
+
+  Closed case records:    10 years minimum (statutory requirement)
+
+  Audit logs:             10 years minimum
+
+  Blockchain hash records: PERMANENT (cannot be deleted under any circumstance)
+
+  Session logs:           2 years
+
+  Failed access logs:     5 years
+
+6.4 How to Replace or Extend
+
+SIEM integration (Splunk, Elastic): add async event publisher after audit write. Audit DB and SIEM are decoupled via message queue.
+
+Real-time anomaly detection: subscribe to audit event stream, apply ML model, trigger alerts on patterns (e.g., officer accessing 100 FIRs at 3 AM).
+
+
+
+7. AI and Analysis Layer (Modular, Optional)
+
+MODULE: AI_ADAPTER_MODULE
+
+OPTIONAL — FULLY REPLACEABLE
+
+
+
+The AI Layer is a pluggable analysis overlay. In the current implementation it provides a placeholder that always returns valid output without blocking operations. This is intentional — the core investigation system must work with or without AI. AI provides advisory value-add, never a critical path decision.
+
+Design Principle
+
+The AI Layer NEVER blocks, delays, or makes decisions in the investigation workflow. It provides advisory outputs only. All AI results are logged alongside the analyzed record, but the investigating officer makes all legal decisions.
+
+
+
+7.1 AI Capabilities
+
+Field
+
+Description / Purpose
+
+deepfake_check(file)
+
+Analyzes video/image for manipulation. Placeholder: { status: OK, confidence: 1.0 }. Replace with real model.
+
+document_classification(file)
+
+Classifies document type: FIR | statement | forensic_report | court_order. Aids automated indexing.
+
+ocr_extraction(file)
+
+Extracts text from scanned paper documents. Enables digitizing legacy paper FIRs.
+
+entity_recognition(text)
+
+Extracts names, addresses, dates, legal sections from FIR text. Aids auto-populating structured fields.
+
+case_similarity(fir_id)
+
+Compares case patterns with historical cases to identify related crimes or MO similarities.
+
+7.2 AI Adapter Interface
+
+interface AIAdapter {
+
+  analyzeMedia(file: Buffer, type: MediaType): Promise<AIAnalysisResult>
+
+  extractEntities(text: string): Promise<EntityList>
+
+  classifyDocument(file: Buffer): Promise<DocumentClass>
+
+  detectAnomalies(record: InvestigationRecord): Promise<AnomalyReport>
+
+}
+
+
+
+type AIAnalysisResult = {
+
+  status: 'OK' | 'SUSPECT' | 'ERROR'
+
+  confidence: number  // 0.0 to 1.0
+
+  flags: string[]
+
+  model_version: string
+
+  processing_time_ms: number
+
+}
+
+7.3 Replacement Options
+
+Capability
+
+Replacement Option
+
+Integration Effort
+
+Deepfake Detection
+
+Microsoft Video Authenticator / Sensity AI
+
+Medium — REST API wrapper
+
+Document OCR
+
+Google Cloud Vision / AWS Textract / Tesseract (offline)
+
+Low — adapter swap
+
+Entity Extraction
+
+spaCy NLP / AWS Comprehend / Azure Language
+
+Low — adapter swap
+
+Case Similarity
+
+Custom ML model trained on CCTNS data
+
+High — needs training data
+
+Anomaly Detection
+
+Isolation Forest / AutoML / custom rules engine
+
+Medium
+
+
+
+8. Database Design Principles
+
+MODULE: DATABASE_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+8.1 Core Rules
+
+Append-Only: No DELETE statements on investigation records. All deletes are soft-deletes with reason code and supervisor signature.
+
+Version-Controlled: Every update creates a new version row. Original row preserved with is_current=false.
+
+UTC Timestamps: All timestamps stored in UTC. Display layer handles timezone conversion.
+
+Normalized Identities: Every person, place, and officer has one UUID. No duplication across tables.
+
+DB-Level Insert-Only: Database user has INSERT and SELECT only. No UPDATE or DELETE at DB level.
+
+8.2 Schema Pattern
+
+-- Every investigation table follows this base pattern:
+
+CREATE TABLE fir (
+
+  fir_id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+  version         INTEGER NOT NULL DEFAULT 1,
+
+  is_current      BOOLEAN NOT NULL DEFAULT true,
+
+  fir_number      VARCHAR(50) UNIQUE NOT NULL,
+
+  fir_status      fir_status_enum NOT NULL DEFAULT 'registered',
+
+  offence_sections TEXT[] NOT NULL,
+
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+
+  created_by      UUID REFERENCES officers(officer_id),
+
+  blockchain_ref  VARCHAR(255),  -- blockchain transaction hash
+
+  data_hash       VARCHAR(64) NOT NULL  -- SHA-256 of this row
+
+);
+
+
+
+-- All investigation record tables share:
+
+-- id, fir_id, created_by, created_at, blockchain_ref, data_hash
+
+8.3 How to Replace or Extend
+
+MongoDB migration: use same field structure as documents. Enforce append-only at application layer since MongoDB has no native row-level insert-only.
+
+National scale sharding: shard by state_code + police_station_id. Cross-shard intelligence queries go through read replicas.
+
+Full-text search: add Elasticsearch as read replica, synced via change-data-capture (Debezium). Primary DB remains authoritative.
+
+
+
+9. API Design and Endpoints
+
+MODULE: API_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+All endpoints follow RESTful conventions with investigation-domain naming. Every endpoint that writes data triggers three actions atomically: (1) DB write, (2) blockchain hash write, (3) audit log entry. If any step fails, the entire operation is rolled back.
+
+9.1 FIR Endpoints
+
+POST   /api/v1/fir                      Register new FIR
+
+GET    /api/v1/fir/:fir_id              Fetch FIR by ID
+
+GET    /api/v1/fir/:fir_id/verify       Blockchain integrity check
+
+POST   /api/v1/fir/:fir_id/correction   Add FIR correction entry
+
+GET    /api/v1/fir/:fir_id/history      Full version and audit history
+
+PATCH  /api/v1/fir/:fir_id/status       Update FIR status (with reason)
+
+9.2 Case Diary Endpoints
+
+POST   /api/v1/fir/:fir_id/diary         Add diary entry (append-only)
+
+GET    /api/v1/fir/:fir_id/diary         Get all entries (chronological)
+
+GET    /api/v1/fir/:fir_id/diary/:id     Get specific entry
+
+GET    /api/v1/fir/:fir_id/diary/:id/verify  Blockchain verify entry
+
+9.3 Evidence Endpoints
+
+POST   /api/v1/fir/:fir_id/seizure          Create seizure memo
+
+POST   /api/v1/fir/:fir_id/property         Register property in Malkhana
+
+GET    /api/v1/fir/:fir_id/property         List all evidence for FIR
+
+POST   /api/v1/property/:id/movement        Record evidence movement
+
+GET    /api/v1/property/:id/custody-chain   Full chain of custody
+
+GET    /api/v1/property/:id/verify          Blockchain verify evidence
+
+9.4 Charge Sheet Endpoints
+
+POST   /api/v1/fir/:fir_id/chargesheet            File charge sheet
+
+GET    /api/v1/fir/:fir_id/chargesheet            Get charge sheet
+
+POST   /api/v1/fir/:fir_id/chargesheet/supplementary  Add supplementary
+
+GET    /api/v1/fir/:fir_id/chargesheet/verify     Blockchain verify
+
+9.5 Public Verification Endpoint (Court-Facing, No Auth Required)
+
+POST   /api/v1/verify
+
+Body:  { record_type, record_id, expected_hash (optional) }
+
+Returns: { verified: bool, stored_hash, computed_hash, mismatch_details }
+
+
+
+This endpoint is publicly accessible for court verification.
+
+Rate limited: 100 requests/minute per IP.
+
+All verification calls are logged even though no auth is required.
+
+
+
+10. Court Proceedings Module
+
+MODULE: COURT_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+Once the Charge Sheet is filed, the case moves to court. DIRS tracks all hearings and orders. Courts access records through a separate read-only, blockchain-verifiable portal — no access to the internal investigation system.
+
+10.1 COURT_PROCEEDING Data Model
+
+Field
+
+Description / Purpose
+
+proceeding_id
+
+UUID.
+
+fir_id
+
+Parent FIR.
+
+court_name
+
+Name of court (District, Sessions, High Court).
+
+case_number
+
+Court's own case number. Different from FIR number.
+
+hearing_date
+
+Date of each hearing.
+
+stage_of_trial
+
+Enum: cognizance | framing_of_charges | evidence | arguments | judgment | appeal.
+
+order_summary
+
+Summary of judge's order on that date.
+
+next_date
+
+Next hearing date.
+
+judge_name
+
+Name of presiding judge.
+
+court_document_refs
+
+References to court orders, warrants in DOCUMENT_STORE.
+
+10.2 Court Portal Design
+
+Courts authenticate with their own credentials — not against the police system.
+
+All records shown are blockchain-verified before display (verified badge shown to judge).
+
+Courts can independently verify any record hash against the blockchain without system access.
+
+All court access is logged in the audit system with read-access timestamps.
+
+
+
+11. Developer Rebuild Guide
+
+Follow this sequence to rebuild DIRS from scratch. The order matters — later modules depend on earlier ones.
+
+11.1 Technology Stack (Default — All Replaceable)
+
+Layer
+
+Default Choice
+
+Replacement Options
+
+API Framework
+
+Node.js + Express / FastAPI (Python)
+
+Django, Spring Boot, Go Fiber
+
+Primary Database
+
+PostgreSQL 15+
+
+MySQL 8+, MongoDB 6+
+
+Blockchain
+
+Hyperledger Fabric (permissioned)
+
+Ethereum private, Polygon, IPFS
+
+Authentication
+
+JWT + bcrypt
+
+OAuth2, LDAP, Aadhar OTP
+
+Cache
+
+Redis
+
+Memcached, in-memory (dev only)
+
+Message Queue
+
+RabbitMQ / AWS SQS
+
+Kafka, BullMQ, Redis Streams
+
+Search
+
+PostgreSQL FTS (phase 1)
+
+Elasticsearch (phase 2+)
+
+File Storage
+
+MinIO (S3-compatible)
+
+AWS S3, Azure Blob, local FS
+
+AI Layer
+
+Placeholder stub
+
+Any REST-based AI API
+
+Monitoring
+
+Prometheus + Grafana
+
+DataDog, CloudWatch, Loki
+
+
+
+11.2 Build Order
+
+Database schema — create all tables with FK constraints. FIR table first.
+
+Core data models — FIR, Person, Officer. No business logic yet.
+
+Auth module — JWT issuance, RBAC matrix, session management.
+
+Audit hook — wire into every DB write. Without this, nothing is traceable.
+
+Blockchain adapter — implement interface with stub first. Swap to real chain later.
+
+FIR service — registration, correction, status update.
+
+Case Diary service — append-only entries, ordering enforcement.
+
+Evidence services — Seizure Memo, Property Register, Movement Register.
+
+Person and Mapping service.
+
+Charge Sheet service — aggregates all above into final report.
+
+Court module — read-only views, blockchain verification portal.
+
+AI adapter — plug in stub. Replace with real model when ready.
+
+REST API layer — expose all services via endpoints.
+
+Admin dashboard — monitoring, audit log viewer, alert management.
+
+
+
+11.3 Environment Setup
+
+git clone https://github.com/your-org/dirs.git && cd dirs
+
+cp .env.example .env
+
+
+
+# Required environment variables
+
+DATABASE_URL=postgresql://dirs_user:pass@localhost:5432/dirs_db
+
+BLOCKCHAIN_ADAPTER=hyperledger   # or: ethereum | ipfs | stub
+
+BLOCKCHAIN_NODE_URL=http://localhost:7051
+
+JWT_SECRET=<your-256-bit-secret>
+
+AI_ADAPTER=stub                  # or: azure | aws | google
+
+AUDIT_LEVEL=full                 # or: writes_only | reads_only
+
+
+
+# Start infrastructure
+
+docker-compose up -d postgres redis minio rabbitmq
+
+
+
+# Run migrations
+
+npm run migrate
+
+
+
+# Seed reference data (police stations, districts, IPC sections)
+
+npm run seed
+
+
+
+# Start API
+
+npm run dev
+
+11.4 Folder Structure
+
+dirs/
+
++-- src/
+
+|   +-- modules/              One folder per investigation module
+
+|   |   +-- fir/
+
+|   |   |   +-- fir.model.ts
+
+|   |   |   +-- fir.service.ts
+
+|   |   |   +-- fir.controller.ts
+
+|   |   |   +-- fir.schema.sql
+
+|   |   +-- case-diary/
+
+|   |   +-- evidence/
+
+|   |   +-- charge-sheet/
+
+|   |   +-- court/
+
+|   +-- adapters/             Pluggable external integrations
+
+|   |   +-- blockchain/
+
+|   |   |   +-- interface.ts  BlockchainAdapter contract
+
+|   |   |   +-- hyperledger.adapter.ts
+
+|   |   |   +-- ethereum.adapter.ts
+
+|   |   |   +-- stub.adapter.ts
+
+|   |   +-- ai/
+
+|   |       +-- interface.ts  AIAdapter contract
+
+|   |       +-- stub.adapter.ts
+
+|   +-- auth/                 JWT, RBAC, session
+
+|   +-- audit/                Audit logging hook
+
+|   +-- shared/               Hash utilities, validators
+
++-- migrations/               DB migration files
+
++-- seeds/                    Reference data
+
++-- tests/
+
+|   +-- unit/
+
+|   +-- integration/
+
+|   +-- legal-compliance/     Tests for CrPC rule enforcement
+
++-- docker-compose.yml
+
+
+
+12. Testing Strategy
+
+12.1 Unit Tests — Per Module
+
+FIR: verify immutability enforcement — no direct update possible.
+
+Case Diary: verify append-only — no delete or update.
+
+Evidence: verify hash mismatch triggers tamper alert.
+
+Auth: verify defence lawyer cannot access Case Diary (legal restriction must return LegalRestriction error, not 403).
+
+Blockchain Adapter: verify hash computation is deterministic across calls.
+
+12.2 Integration Tests — Cross-Module
+
+Register FIR -> add diary entry -> create seizure -> file charge sheet -> verify all hashes on blockchain.
+
+Simulate tampering by directly editing DB -> run verification -> confirm detection.
+
+Full chain of custody: seize -> move to lab -> move to court -> verify movement log integrity.
+
+12.3 Legal Compliance Tests
+
+Attempt FIR correction without a correction entry -> expect rejection.
+
+Attempt charge sheet filing past statutory deadline -> verify supervisor alert was triggered.
+
+Attempt to delete a Case Diary entry -> expect hard rejection with legal error code.
+
+Attempt defence lawyer access to Case Diary -> expect LegalRestriction error, not generic 403.
+
+Attempt FIR registration without two witnesses on Seizure Memo -> expect validation error.
+
+npm test                              Run all tests
+
+npm test -- --suite legal-compliance  Legal compliance tests only
+
+npm test -- --suite blockchain        Blockchain integrity tests
+
+npm run test:tamper-simulation        Simulate and detect tampering
+
+
+
+13. External Integration Points
+
+MODULE: INTEGRATION_MODULE
+
+MODULAR + REPLACEABLE
+
+
+
+13.1 CCTNS — National Crime Database
+
+CCTNS (Crime and Criminal Tracking Network and Systems) is India's national crime database. DIRS syncs FIR data one-way: DIRS is the authoritative source. Add cctns_fir_id to FIR table. Post-FIR registration, async job pushes data to CCTNS endpoint. CCTNS acknowledgment ID stored. Sync failures queued for retry with exponential backoff.
+
+13.2 ICJS — Interoperable Criminal Justice System
+
+ICJS connects Police, Courts, Prisons, and Prosecution. DIRS publishes charge sheet and court proceeding data to ICJS for consumption by public prosecutor offices and prison administration.
+
+13.3 CFSL — Forensic Lab Systems
+
+When evidence is sent to a Central Forensic Science Laboratory, DIRS creates a movement record and awaits a webhook from the lab system when the forensic report is ready. The report reference is stored in the Case Diary and Property Register.
+
+13.4 eCourts Platform
+
+eCourts is the national court digitization platform. DIRS posts charge sheet metadata to eCourts so the case appears in the court's digital docket. Case numbers from eCourts are stored in the COURT_PROCEEDING table.
+
+
+
+14. Security Architecture
+
+14.1 Data Protection
+
+All PII encrypted at rest using AES-256. Decryption only on authorized, logged access.
+
+Biometric data stored in separate HSM-backed store — never in main database.
+
+All inter-service communication over mTLS. HTTP disabled inside the network.
+
+Database connections use certificate-based auth. Password auth disabled at DB level.
+
+14.2 Evidence File Integrity
+
+All uploaded files hashed on upload via SHA-256.
+
+Hash stored in PROPERTY_REGISTER.hash_value and on blockchain.
+
+Every file download triggers re-hash comparison before delivery.
+
+Files stored with immutable object lock (MinIO/S3 WORM mode — write once, read many).
+
+14.3 Anti-Tampering
+
+Database users have INSERT and SELECT only. No UPDATE or DELETE at DB level.
+
+Soft deletes implemented at application layer with mandatory reason code and supervisor signature.
+
+DB audit log (pg_audit / binlog) captures all raw SQL for secondary verification.
+
+Automated blockchain verification job runs every 6 hours — scans all records and alerts on any mismatch.
+
+
+
+15. Deployment Guide
+
+15.1 Infrastructure Topology
+
+Production Deployment (Kubernetes):
+
+
+
+  [Load Balancer]
+
+       |
+
+  [API Gateway]    <- Rate limiting, SSL termination, WAF
+
+       |
+
+  [API Pods x 3]   <- Stateless, horizontally scalable
+
+       |
+
+  [Internal Network - mTLS everywhere]
+
+       |
+
+       +-- [PostgreSQL Primary + 2 Read Replicas]
+
+       +-- [Redis Cluster]
+
+       +-- [RabbitMQ Cluster]
+
+       +-- [MinIO Cluster (WORM mode)]
+
+       +-- [Blockchain Node]
+
+
+
+  [Monitoring]  Prometheus -> Grafana
+
+  [Logging]     Fluent Bit -> Loki -> Grafana
+
+  [Alerting]    PagerDuty / SMS Gateway for tamper alerts
+
+15.2 Modular Deployment Path
+
+Phase 1 — Monolith: All modules in one service. Simplest to operate.
+
+Phase 2 — Modular Monolith: Modules separated internally, deployed together. Recommended starting point.
+
+Phase 3 — Microservices: High-traffic modules extracted as separate services communicating via events.
+
+
+
+16. Glossary
+
+Field
+
+Description / Purpose
+
+CrPC
+
+Code of Criminal Procedure — primary law governing criminal investigation in India.
+
+FIR
+
+First Information Report — official record of complaint. Starting point of investigation.
+
+Case Diary
+
+Section 172 CrPC daily log maintained by the Investigating Officer.
+
+Charge Sheet
+
+Section 173 CrPC final report filed in court after investigation completes.
+
+Malkhana
+
+Police property room where seized evidence is stored and tracked.
+
+Panchnama
+
+Witnessed document of search, seizure, or inspection of a place or property.
+
+IO
+
+Investigating Officer — officer responsible for the specific investigation.
+
+SHO
+
+Station House Officer — officer in charge of the police station.
+
+CFSL
+
+Central Forensic Science Laboratory — government forensic analysis facility.
+
+CCTNS
+
+Crime and Criminal Tracking Network and Systems — national police database.
+
+ICJS
+
+Interoperable Criminal Justice System — connects police, courts, prisons.
+
+IPC
+
+Indian Penal Code — law defining criminal offences and punishments.
+
+UAPA
+
+Unlawful Activities Prevention Act — anti-terrorism law with special investigation powers.
+
+Cognizable Offence
+
+Offence for which police can arrest without warrant. FIR is mandatory.
+
+SHA-256
+
+Cryptographic hash function generating tamper-evident fingerprints of records.
+
+Blockchain
+
+Append-only distributed ledger where record hashes are anchored for verification.
+
+Chain of Custody
+
+Documented trail of every person who handled a piece of evidence.
+
+IRBAC
+
+Investigation Role-Based Access Control — DIRS extension of RBAC adding case-level context.
+
+WORM
+
+Write Once Read Many — storage mode preventing modification after initial write.
+
+mTLS
+
+Mutual TLS — both client and server verify each other's certificates.
+
+
+
+
+
+DIRS — Digital Investigation Record System  |  Developer README v1.0  |  CrPC-Aligned  |  All modules independently replaceable
+
+This document covers rebuild, module replacement, legal compliance, and extension strategy. Follow the build order in Section 11 when starting from scratch.
+
+Internal Architecture Document  |  Page  of

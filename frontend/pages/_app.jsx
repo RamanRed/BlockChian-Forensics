@@ -1,5 +1,8 @@
 import "../src/styles/global.css";
 import "../src/styles/layout.css";
+import "../src/styles/forms.css";
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer } from "react-toastify";
 import Navbar from "../src/components/Navbar";
 import Sidebar from "../src/components/Sidebar";
 import { AuthProvider } from "../src/context/AuthContext";
@@ -37,6 +40,7 @@ function Shell({ Component, pageProps }) {
           </main>
         </div>
       </div>
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} newestOnTop closeOnClick pauseOnHover theme="light" />
     </>
   );
 }
