@@ -435,5 +435,49 @@ class AIAnalysisResult(BaseModel):
     status:           AIStatus
     model_version:    str
     manipulation_type: Optional[str] = None
-    confidence:       float = Field(..., ge=0.0, le=1.0)
     heatmap_path:     Optional[str] = None
+
+
+# ---------------------------------------------------------------------------
+# Investigation Finding Schemas
+# ---------------------------------------------------------------------------
+
+class InvestigationFindingCreate(BaseModel):
+    title:               str = Field(..., max_length=300)
+    description:         Optional[str] = None
+    finding_type:        str = Field(..., description="e.g., field_finding, witness_statement, digital_forensics")
+    # For text-based (like statements) or command bypassing (digital_forensics)
+    text_content:        Optional[str] = None
+    # For forensic bypass specifically
+    system_command_data: Optional[str] = None
+    # Lab details if applicable
+    lab_reference_number: Optional[str] = None
+    lab_name:            Optional[str] = None
+    received_on:         Optional[datetime] = None
+    result_date:         Optional[datetime] = None
+
+
+class InvestigationFindingResponse(BaseModel):
+    id:                   int
+    fir_id:               int
+    finding_type:         str
+    title:                str
+    description:          Optional[str]
+    text_content:         Optional[str]
+    original_filename:    Optional[str]
+    file_size:            Optional[int]
+    mime_type:            Optional[str]
+    lab_reference_number: Optional[str]
+    lab_name:             Optional[str]
+    received_on:          Optional[datetime]
+    result_date:          Optional[datetime]
+    file_hash:            Optional[str]
+    blockchain_tx:        Optional[str]
+    ipfs_cid:             Optional[str]
+    ai_score:             Optional[float]
+    ai_status:            str
+    model_version:        Optional[str]
+    recorded_by_io_id:    int
+    recorded_at:          datetime
+
+    model_config = ConfigDict(from_attributes=True)

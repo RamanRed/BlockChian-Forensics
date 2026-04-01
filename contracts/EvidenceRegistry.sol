@@ -67,6 +67,7 @@ contract DIRSRegistry {
         string indexed dataHash,
         string  recordType,
         string  recordId,
+        string  ipfsCid,
         address indexed submitter,
         uint256 timestamp
     );
@@ -76,6 +77,12 @@ contract DIRSRegistry {
         address indexed submitter,
         uint256 timestamp
     );
+
+    mapping(bytes32 => string) public recordCID;
+
+    function getRecordCID(bytes32 key) external view returns (string memory) {
+        return recordCID[key];
+    }
 
     // ------------------------------------------------------------------
     // Generic Write (used by all DIRS modules)
@@ -90,7 +97,8 @@ contract DIRSRegistry {
     function storeRecordHash(
         string calldata recordType,
         string calldata recordId,
-        string calldata dataHash
+        string calldata dataHash,
+        string calldata ipfsCid
     ) external {
         require(!_records[dataHash].exists, "DIRSRegistry: hash already registered");
 
@@ -103,7 +111,10 @@ contract DIRSRegistry {
             exists:     true
         });
 
-        emit RecordStored(dataHash, recordType, recordId, msg.sender, block.timestamp);
+        bytes32 key = keccak256(abi.encodePacked(dataHash));
+        recordCID[key] = ipfsCid;
+
+        emit RecordStored(dataHash, recordType, recordId, ipfsCid, msg.sender, block.timestamp);
     }
 
     // ------------------------------------------------------------------

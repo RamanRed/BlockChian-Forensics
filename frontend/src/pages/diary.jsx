@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import Loader from "../../components/Loader";
-import { useFetch } from "../../hooks/useFetch";
-import { firService, diaryService } from "../../services/dirsService";
+import Loader from "../components/Loader";
+import { useFetch } from "../hooks/useFetch";
+import { firService, diaryService } from "../services/dirsService";
 import { toast } from "react-toastify";
 import { HiOutlineBookOpen, HiOutlineLockClosed } from "react-icons/hi";
 

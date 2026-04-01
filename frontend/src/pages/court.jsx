@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
-import Loader from "../../components/Loader";
-import { useFetch } from "../../hooks/useFetch";
-import { courtService, chargesheetService, firService } from "../../services/dirsService";
+import Loader from "../components/Loader";
+import { useFetch } from "../hooks/useFetch";
+import { courtService, chargesheetService, firService } from "../services/dirsService";
 import {
   HiOutlineScale,
   HiOutlineSearch,
