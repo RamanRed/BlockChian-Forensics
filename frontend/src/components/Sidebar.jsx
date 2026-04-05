@@ -46,6 +46,9 @@ function IOSidebar() {
       <NavItem href="/investigator/forward-lab" icon={<HiOutlineBeaker />}>Forward to Lab</NavItem>
       <NavItem href="/investigator/diary" icon={<HiOutlineBookOpen />}>Case Diary</NavItem>
 
+      <div className="sidebar-label">Legal</div>
+      <NavItem href="/chargesheet" icon={<HiOutlineClipboardCheck />}>Charge Sheets</NavItem>
+
       <div className="sidebar-label">Case Updates</div>
       <NavItem href="/investigator/chain" icon={<HiOutlineLightningBolt />}>Chain of Events</NavItem>
       <NavItem href="/investigator/verdict" icon={<HiOutlineScale />}>Court Verdicts</NavItem>
