@@ -1,7 +1,7 @@
 import { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import { AuthContext } from "../../context/AuthContext";
-import { firService, custodyService, seizureService } from "../../services/dirsService";
+import { firService, custodyService, seizureService, forensicSubmissionService } from "../../services/dirsService";
 import { useFetch } from "../../hooks/useFetch";
 import Loader from "../../components/Loader";
 import {
@@ -100,11 +100,23 @@ function ForwardToLab() {
 
     setSubmitting(true);
     try {
+      // 1. Log the chain of custody transfer
       await custodyService.transfer({
         property_id: parseInt(selectedPropertyId),
-        to_user_id: selectedLab.id,
-        transfer_reason: notes || `Forwarded to ${selectedLab.name} for forensic analysis`,
+        to_custodian_id: selectedLab.id,
+        to_custodian_name: selectedLab.name,
+        purpose: notes || `Forwarded to ${selectedLab.name} for forensic analysis`,
+        movement_date: new Date().toISOString(),
       });
+
+      // 2. Create the forensic submission request so it appears in the CFSL portal
+      await forensicSubmissionService.submit({
+        fir_id: parseInt(selectedFirId),
+        property_id: parseInt(selectedPropertyId),
+        submitted_to: selectedLab.id,
+        notes: notes || "Forensic analysis required",
+      });
+
       toast.success(`Successfully forwarded to ${selectedLab.name} ✓`);
       setStep(1);
       setSelectedLab(null);
@@ -112,7 +124,14 @@ function ForwardToLab() {
       setSelectedPropertyId("");
       setNotes("");
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to forward to lab");
+      const detail = err.response?.data?.detail;
+      toast.error(
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((e) => e.msg).join(", ")
+          : "Failed to forward to lab"
+      );
     } finally {
       setSubmitting(false);
     }

@@ -112,7 +112,14 @@ function CaseDiaries() {
       setActiveTab("view");
       if (refetch) refetch();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to add entry");
+      const detail = err.response?.data?.detail;
+      toast.error(
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((e) => e.msg).join(", ")
+          : "Failed to add entry"
+      );
     } finally {
       setSubmitting(false);
     }

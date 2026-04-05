@@ -17,12 +17,11 @@ function SeizureMemoForm({ firs, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     fir_id: "",
+    memo_number: "",
     seizure_date: new Date().toISOString().slice(0, 16),
     place_of_seizure: "",
-    seized_from: "",
-    seizure_officer_name: "",
     witness_names: "",
-    remarks: "",
+    items_description: "",
   });
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
@@ -31,15 +30,28 @@ function SeizureMemoForm({ firs, onSuccess }) {
     e.preventDefault();
     setLoading(true);
     try {
+      const witnesses = form.witness_names.split(",").map((s) => s.trim());
+      
       await seizureService.createMemo({
-        ...form,
         fir_id: parseInt(form.fir_id),
-        seizure_date: new Date(form.seizure_date).toISOString(),
+        memo_number: form.memo_number,
+        date_time: new Date(form.seizure_date).toISOString(),
+        place_of_seizure: form.place_of_seizure,
+        witness_1_name: witnesses[0] || "",
+        witness_2_name: witnesses[1] || "",
+        items_description: form.items_description,
       });
       toast.success("Seizure memo recorded and hashed ✓");
       if (onSuccess) onSuccess();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to create seizure memo");
+      const detail = err.response?.data?.detail;
+      toast.error(
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((e) => e.msg).join(", ")
+          : "Failed to create seizure memo"
+      );
     } finally {
       setLoading(false);
     }
@@ -84,21 +96,17 @@ function SeizureMemoForm({ firs, onSuccess }) {
         </div>
         <div className="form-row">
           <div className="form-group">
-            <label>Seized From (Name / Entity)</label>
-            <input className="input" value={form.seized_from} onChange={set("seized_from")} />
+            <label>Memo Number *</label>
+            <input className="input" value={form.memo_number} onChange={set("memo_number")} placeholder="e.g. SM/2026/01" required />
           </div>
           <div className="form-group">
-            <label>Seizing Officer Name *</label>
-            <input className="input" value={form.seizure_officer_name} onChange={set("seizure_officer_name")} required />
+            <label>Witness Names *</label>
+            <input className="input" value={form.witness_names} onChange={set("witness_names")} placeholder="Comma-separated (min 1 req)" required />
           </div>
         </div>
         <div className="form-group">
-          <label>Witness Names</label>
-          <input className="input" value={form.witness_names} onChange={set("witness_names")} placeholder="Comma-separated names" />
-        </div>
-        <div className="form-group">
-          <label>Remarks</label>
-          <textarea className="input" rows={2} value={form.remarks} onChange={set("remarks")} />
+          <label>Items Description *</label>
+          <textarea className="input" rows={2} value={form.items_description} onChange={set("items_description")} required />
         </div>
 
         <button className="btn" type="submit" disabled={loading}>
@@ -113,15 +121,18 @@ function SeizureMemoForm({ firs, onSuccess }) {
 function EvidenceUploadForm({ firs, onSuccess }) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    fir_id: "",
-    item_description: "",
+    seizure_memo_id: "",
+    property_number: "",
+    description: "",
     item_type: "physical",
-    quantity: "1",
-    condition_at_seizure: "",
+    storage_location: "",
   });
   const [file, setFile] = useState(null);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  const { data: memoData, loading: memosLoading } = useFetch(() => seizureService.listMemos({ limit: 200 }), []);
+  const memos = Array.isArray(memoData) ? memoData : memoData?.data || [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -130,20 +141,27 @@ function EvidenceUploadForm({ firs, onSuccess }) {
     setLoading(true);
     try {
       const fd = new FormData();
-      fd.append("fir_id", form.fir_id);
-      fd.append("item_description", form.item_description);
+      fd.append("seizure_memo_id", form.seizure_memo_id);
+      fd.append("property_number", form.property_number);
+      fd.append("description", form.description);
       fd.append("item_type", form.item_type);
-      fd.append("quantity", form.quantity);
-      fd.append("condition_at_seizure", form.condition_at_seizure);
+      if (form.storage_location) fd.append("storage_location", form.storage_location);
       fd.append("file", file);
 
       await seizureService.uploadProperty(fd);
       toast.success("Evidence recorded & blockchain hash generated ✓");
-      setForm({ fir_id: "", item_description: "", item_type: "physical", quantity: "1", condition_at_seizure: "" });
+      setForm({ seizure_memo_id: "", property_number: "", description: "", item_type: "physical", storage_location: "" });
       setFile(null);
       if (onSuccess) onSuccess();
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Failed to upload evidence");
+      const detail = err.response?.data?.detail;
+      toast.error(
+        typeof detail === "string"
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((e) => e.msg).join(", ")
+          : "Failed to upload evidence"
+      );
     } finally {
       setLoading(false);
     }
@@ -156,32 +174,26 @@ function EvidenceUploadForm({ firs, onSuccess }) {
         Upload Evidence / Property
       </h3>
       <form onSubmit={handleSubmit}>
-        <div className="form-section-label">Evidence Reference</div>
         <div className="form-group">
-          <label>Select FIR *</label>
-          <select className="input" value={form.fir_id} onChange={set("fir_id")} required>
-            <option value="">— Choose FIR —</option>
-            {firs.map((f) => (
-              <option key={f.id} value={f.id}>
-                {f.fir_number} — {f.police_station}
-              </option>
-            ))}
-          </select>
+          <label>Select Seizure Memo *</label>
+          {memosLoading ? <Loader /> : (
+            <select className="input" value={form.seizure_memo_id} onChange={set("seizure_memo_id")} required>
+              <option value="">— Choose Memo —</option>
+              {memos.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.memo_number} — {m.place_of_seizure}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
 
         <div className="form-section-label">Item Details</div>
-        <div className="form-group">
-          <label>Item Description *</label>
-          <textarea
-            className="input"
-            rows={2}
-            value={form.item_description}
-            onChange={set("item_description")}
-            placeholder="Describe the evidence item..."
-            required
-          />
-        </div>
         <div className="form-row">
+          <div className="form-group">
+            <label>Property Number *</label>
+            <input className="input" value={form.property_number} onChange={set("property_number")} placeholder="e.g. PR/2026/12" required />
+          </div>
           <div className="form-group">
             <label>Item Type *</label>
             <select className="input" value={form.item_type} onChange={set("item_type")} required>
@@ -192,19 +204,21 @@ function EvidenceUploadForm({ firs, onSuccess }) {
               <option value="other">Other</option>
             </select>
           </div>
-          <div className="form-group">
-            <label>Quantity</label>
-            <input className="input" type="number" min="1" value={form.quantity} onChange={set("quantity")} />
-          </div>
-          <div className="form-group" style={{ flex: 2 }}>
-            <label>Condition at Seizure</label>
-            <input
-              className="input"
-              value={form.condition_at_seizure}
-              onChange={set("condition_at_seizure")}
-              placeholder="e.g. Good, Damaged, Sealed"
-            />
-          </div>
+        </div>
+        <div className="form-group">
+          <label>Description *</label>
+          <textarea
+            className="input"
+            rows={2}
+            value={form.description}
+            onChange={set("description")}
+            placeholder="Describe the evidence item..."
+            required
+          />
+        </div>
+        <div className="form-group">
+          <label>Storage Location</label>
+          <input className="input" value={form.storage_location} onChange={set("storage_location")} placeholder="e.g. Locker 4, Shelf B" />
         </div>
 
         <div className="form-group">

@@ -262,3 +262,30 @@ async def get_property(
     log_action(db, user_id=current_user.id, action="PROPERTY_VIEWED",
                evidence_id=property_id, ip_address=request.client.host)
     return prop
+
+
+@router.get("/property/{property_id}/download")
+async def download_property_file(
+    property_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Download/Stream the physical/digital file associated with a property."""
+    from fastapi.responses import FileResponse
+    prop = db.query(PropertyRegister).filter(PropertyRegister.id == property_id).first()
+    if not prop:
+        raise HTTPException(status_code=404, detail="Property not found.")
+    
+    if not prop.storage_path or not os.path.exists(prop.storage_path):
+        raise HTTPException(status_code=404, detail="File content not found on server storage.")
+        
+    log_action(db, user_id=current_user.id, action="PROPERTY_FILE_DOWNLOADED",
+               evidence_id=property_id, ip_address=request.client.host)
+               
+    return FileResponse(
+        path=prop.storage_path, 
+        filename=prop.original_filename or f"evidence_{prop.id}",
+        media_type="application/octet-stream"
+    )
+
