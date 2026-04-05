@@ -3,7 +3,7 @@ import SeizurePage from "../../src/pages/seizure/index";
 
 export default function SeizurePageRoute() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={["io", "sp", "dsp", "admin"]}>
       <SeizurePage />
     </ProtectedRoute>
   );

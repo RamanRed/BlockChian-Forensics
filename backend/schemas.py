@@ -481,3 +481,89 @@ class InvestigationFindingResponse(BaseModel):
     recorded_at:          datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Verdict Schemas
+# ---------------------------------------------------------------------------
+
+class VerdictType(str, Enum):
+    acquittal             = "acquittal"
+    conviction            = "conviction"
+    adjourn               = "adjourn"
+    further_investigation = "further_investigation"
+    discharge             = "discharge"
+    compounded            = "compounded"
+
+
+class CourtVerdictCreate(BaseModel):
+    fir_id:             int
+    chargesheet_id:     int
+    verdict_type:       VerdictType
+    verdict_summary:    str = Field(..., min_length=10)
+    reasoning:          Optional[str] = None
+    sentence:           Optional[str] = None
+    judge_name:         str
+    court_name:         str
+    verdict_date:       datetime
+    next_hearing_date:  Optional[datetime] = None
+
+
+class CourtVerdictResponse(BaseModel):
+    id:                 int
+    fir_id:             int
+    chargesheet_id:     int
+    verdict_type:       str
+    verdict_summary:    str
+    reasoning:          Optional[str]
+    sentence:           Optional[str]
+    judge_name:         str
+    court_name:         str
+    verdict_date:       datetime
+    next_hearing_date:  Optional[datetime]
+    data_hash:          Optional[str]
+    blockchain_tx:      Optional[str]
+    ipfs_cid:           Optional[str]
+    issued_by:          int
+    created_at:         datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+# ---------------------------------------------------------------------------
+# Forensic Submission Schemas
+# ---------------------------------------------------------------------------
+
+class ForensicSubmissionStatus(str, Enum):
+    pending     = "pending"
+    in_progress = "in_progress"
+    completed   = "completed"
+
+
+class ForensicSubmissionCreate(BaseModel):
+    fir_id:         int
+    property_id:    int
+    submitted_to:   Optional[int] = None
+    notes:          Optional[str] = None
+
+
+class ForensicSubmissionResponse(BaseModel):
+    id:                 int
+    fir_id:             int
+    property_id:        int
+    submitted_by:       int
+    submitted_to:       Optional[int]
+    notes:              Optional[str]
+    status:             str
+    finding_id:         Optional[int]
+    lab_observations:   Optional[str]
+    lab_conclusion:     Optional[str]
+    lab_report_file:    Optional[str]
+    data_hash:          Optional[str]
+    blockchain_tx:      Optional[str]
+    ipfs_cid:           Optional[str]
+    submitted_at:       datetime
+    completed_at:       Optional[datetime]
+
+    model_config = ConfigDict(from_attributes=True)
+

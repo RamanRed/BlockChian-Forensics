@@ -53,9 +53,31 @@ const chargesheetService = {
 
 // Court & Public Verification Service
 const courtService = {
-  publicVerify: (hash) => api.get(`/court/verify/${hash}`), // Used differently in VerifyPage
+  publicVerify: (hash) => api.get(`/court/verify/${hash}`),
   addProceeding: (data) => unwrap(api.post("/court/proceedings", data)),
   getProceedings: (csId) => unwrap(api.get(`/court/proceedings/${csId}`)),
+  listCases: () => unwrap(api.get("/court/cases")),
+  getChainOfEvents: (firId) => unwrap(api.get(`/court/chain/${firId}`)),
+};
+
+// Verdict Service
+const verdictService = {
+  issue: (data) => unwrap(api.post("/verdict/", data)),
+  getByFir: (firId) => unwrap(api.get(`/verdict/by-fir/${firId}`)),
+  getByChargesheet: (csId) => unwrap(api.get(`/verdict/by-chargesheet/${csId}`)),
+  listAll: (params) => unwrap(api.get("/verdict/all", { params })),
+};
+
+// Forensic Submission Service
+const forensicSubmissionService = {
+  submit: (data) => unwrap(api.post("/forensic/submit", data)),
+  getIncoming: () => unwrap(api.get("/forensic/incoming")),
+  submitLabResult: (submissionId, formData) =>
+    unwrap(api.post(`/forensic/lab-result/${submissionId}`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    })),
+  getResults: (firId) => unwrap(api.get(`/forensic/results/${firId}`)),
+  listAll: (params) => unwrap(api.get("/forensic/all", { params })),
 };
 
 // Verification Service
@@ -83,6 +105,7 @@ const findingsService = {
       })
     ),
   getLabReports: (firId) => unwrap(api.get(`/investigation-findings/${firId}/lab-reports`)),
+  getAllFindings: (firId) => unwrap(api.get(`/investigation-findings/${firId}/all`)),
 };
 
 export {
@@ -93,6 +116,8 @@ export {
   personService,
   chargesheetService,
   courtService,
+  verdictService,
+  forensicSubmissionService,
   verificationService,
   adminService,
   findingsService,

@@ -3,7 +3,7 @@ import PersonsPage from "../../src/pages/persons/index";
 
 export default function PersonsPageRoute() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={["io", "sp", "dsp", "admin"]}>
       <PersonsPage />
     </ProtectedRoute>
   );

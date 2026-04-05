@@ -27,6 +27,8 @@ from routes.admin_routes       import router as admin_router
 from routes.lawyer_routes      import router as lawyer_router
 from routes.evidence_routes    import router as evidence_router
 from routes.investigation_findings_routes import router as findings_router
+from routes.verdict_routes import router as verdict_router
+from routes.forensic_submission_routes import router as forensic_sub_router
 from utils.logger import setup_logger
 
 load_dotenv()
@@ -145,6 +147,8 @@ app.include_router(admin_router,         prefix="/api/admin",        tags=["Admi
 app.include_router(evidence_router,      prefix="/api/evidence",     tags=["Evidence"])
 app.include_router(lawyer_router,        prefix="/api")
 app.include_router(findings_router,      prefix="/api")
+app.include_router(verdict_router,       prefix="/api/verdict",    tags=["Verdict"])
+app.include_router(forensic_sub_router,  prefix="/api/forensic",   tags=["Forensic Submissions"])
 
 
 # ---------------------------------------------------------------------------

@@ -570,3 +570,108 @@ class AuditLog(Base):
 
     def __repr__(self):
         return f"<AuditLog id={self.id} action={self.action} user={self.user_id}>"
+
+
+# ---------------------------------------------------------------------------
+# Enums for Verdict & Forensic Submission
+# ---------------------------------------------------------------------------
+
+class VerdictType(str, enum.Enum):
+    acquittal             = "acquittal"
+    conviction            = "conviction"
+    adjourn               = "adjourn"
+    further_investigation = "further_investigation"
+    discharge             = "discharge"
+    compounded            = "compounded"
+
+
+class ForensicSubmissionStatus(str, enum.Enum):
+    pending     = "pending"
+    in_progress = "in_progress"
+    completed   = "completed"
+
+
+# ---------------------------------------------------------------------------
+# Court Verdict — Final Judicial Order
+# ---------------------------------------------------------------------------
+
+class CourtVerdict(Base):
+    """
+    Structured court verdict linked to a FIR + ChargeSheet.
+    Separate from CourtProceeding (which tracks hearings).
+    This stores the actual judicial decision.
+    """
+    __tablename__ = "court_verdicts"
+
+    id                  = Column(Integer, primary_key=True, index=True)
+    fir_id              = Column(Integer, ForeignKey("firs.id"), nullable=False)
+    chargesheet_id      = Column(Integer, ForeignKey("chargesheets.id"), nullable=False)
+    verdict_type        = Column(Enum(VerdictType), nullable=False)
+    verdict_summary     = Column(Text, nullable=False)
+    reasoning           = Column(Text, nullable=True)
+    sentence            = Column(Text, nullable=True)       # e.g. "7 years RI under IPC 302"
+    judge_name          = Column(String(200), nullable=False)
+    court_name          = Column(String(200), nullable=False)
+    verdict_date        = Column(DateTime(timezone=True), nullable=False)
+    next_hearing_date   = Column(DateTime(timezone=True), nullable=True)
+
+    # Integrity
+    data_hash           = Column(String(64), nullable=True)
+    blockchain_tx       = Column(String(66), nullable=True)
+    ipfs_cid            = Column(String(255), nullable=True)
+
+    # Issuer
+    issued_by           = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at          = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    fir                 = relationship("FIR", foreign_keys=[fir_id])
+    chargesheet         = relationship("ChargeSheet", foreign_keys=[chargesheet_id])
+    issuer              = relationship("User", foreign_keys=[issued_by])
+
+    def __repr__(self):
+        return f"<CourtVerdict id={self.id} fir={self.fir_id} type={self.verdict_type}>"
+
+
+# ---------------------------------------------------------------------------
+# Forensic Submission — Evidence → Lab Pipeline
+# ---------------------------------------------------------------------------
+
+class ForensicSubmission(Base):
+    """
+    Tracks the lifecycle of evidence submitted by IO/SP/DSP to the forensic team.
+    Links: property_id (evidence) → finding_id (lab report result).
+    """
+    __tablename__ = "forensic_submissions"
+
+    id                  = Column(Integer, primary_key=True, index=True)
+    fir_id              = Column(Integer, ForeignKey("firs.id"), nullable=False)
+    property_id         = Column(Integer, ForeignKey("property_register.id"), nullable=False)
+    submitted_by        = Column(Integer, ForeignKey("users.id"), nullable=False)
+    submitted_to        = Column(Integer, ForeignKey("users.id"), nullable=True)   # CFSL user
+    notes               = Column(Text, nullable=True)
+    status              = Column(Enum(ForensicSubmissionStatus), default=ForensicSubmissionStatus.pending)
+    finding_id          = Column(Integer, ForeignKey("investigation_findings.id"), nullable=True)  # lab result link
+
+    # Lab result fields (populated by CFSL when submitting report)
+    lab_observations    = Column(Text, nullable=True)
+    lab_conclusion      = Column(Text, nullable=True)
+    lab_report_file     = Column(String(500), nullable=True)
+
+    # Integrity
+    data_hash           = Column(String(64), nullable=True)
+    blockchain_tx       = Column(String(66), nullable=True)
+    ipfs_cid            = Column(String(255), nullable=True)
+
+    submitted_at        = Column(DateTime(timezone=True), server_default=func.now())
+    completed_at        = Column(DateTime(timezone=True), nullable=True)
+
+    # Relationships
+    fir                 = relationship("FIR", foreign_keys=[fir_id])
+    evidence            = relationship("PropertyRegister", foreign_keys=[property_id])
+    submitter           = relationship("User", foreign_keys=[submitted_by])
+    receiver            = relationship("User", foreign_keys=[submitted_to])
+    finding             = relationship("InvestigationFinding", foreign_keys=[finding_id])
+
+    def __repr__(self):
+        return f"<ForensicSubmission id={self.id} fir={self.fir_id} status={self.status}>"

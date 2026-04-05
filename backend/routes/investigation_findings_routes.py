@@ -91,7 +91,7 @@ async def add_lab_report(
     db.flush()
     
     cid, tx, bc_hash = await _handle_ipfs_and_blockchain(
-        fir_id=fir_id, finding_id=f"lab_{finding.id}", original_hash=original_hash,
+        fir_id=fir_id, details=f"lab_{finding.id}", original_hash=original_hash,
         file_bytes=file_bytes, filename=file.filename, content_type=file.content_type
     )
     
@@ -101,7 +101,7 @@ async def add_lab_report(
     db.commit()
     db.refresh(finding)
     
-    log_action(db, user_id=current_user.id, action="FINDING_LAB_REPORT_ADDED", fir_id=fir_id, finding_id=finding.id, ip_address=request.client.host)
+    log_action(db, user_id=current_user.id, action="FINDING_LAB_REPORT_ADDED", fir_id=fir_id, details=str(finding.id), ip_address=request.client.host)
     return finding
 
 
@@ -158,7 +158,7 @@ async def add_media(
     
     # Only push verified content to IPFS to save space/protect integrity if desired, or push all.
     cid, tx, bc_hash = await _handle_ipfs_and_blockchain(
-        fir_id=fir_id, finding_id=f"media_{finding.id}", original_hash=original_hash,
+        fir_id=fir_id, details=f"media_{finding.id}", original_hash=original_hash,
         file_bytes=file_bytes if ai_result.status != AIStatus.SUSPICIOUS else None, 
         filename=file.filename, content_type=file.content_type
     )
@@ -168,7 +168,7 @@ async def add_media(
     finding.blockchain_hash = bc_hash
     db.commit()
     db.refresh(finding)
-    log_action(db, user_id=current_user.id, action="FINDING_MEDIA_ADDED", fir_id=fir_id, finding_id=finding.id, ip_address=request.client.host)
+    log_action(db, user_id=current_user.id, action="FINDING_MEDIA_ADDED", fir_id=fir_id, details=str(finding.id), ip_address=request.client.host)
     return finding
 
 
@@ -220,7 +220,7 @@ async def add_finding(
     
     # IPFS - for text, we upload the raw text buffer
     cid, tx, bc_hash = await _handle_ipfs_and_blockchain(
-        fir_id=fir_id, finding_id=f"text_{finding.id}", original_hash=payload_hash,
+        fir_id=fir_id, details=f"text_{finding.id}", original_hash=payload_hash,
         file_bytes=text_content.encode('utf-8'), filename=f"finding_{finding.id}.txt", content_type="text/plain"
     )
     
@@ -230,7 +230,7 @@ async def add_finding(
     db.commit()
     db.refresh(finding)
     
-    log_action(db, user_id=current_user.id, action=f"FINDING_TEXT_ADDED_TYPE_{enum_type.value}", fir_id=fir_id, finding_id=finding.id, ip_address=request.client.host)
+    log_action(db, user_id=current_user.id, action=f"FINDING_TEXT_ADDED_TYPE_{enum_type.value}", fir_id=fir_id, details=str(finding.id), ip_address=request.client.host)
     return finding
 
 

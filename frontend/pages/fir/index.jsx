@@ -3,7 +3,7 @@ import FIRList from "../../src/pages/fir/index";
 
 export default function FIRPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={["io", "sp", "dsp", "admin"]}>
       <FIRList />
     </ProtectedRoute>
   );
