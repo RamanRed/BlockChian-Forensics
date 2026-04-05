@@ -113,13 +113,13 @@ def require_cfsl_or_above(current_user: User = Depends(get_current_user)) -> Use
 
 def require_read_only(current_user: User = Depends(get_current_user)) -> User:
     """
-    Allow all read-only roles: lawyer, court, auditor.
+    Allow all roles to view basic logs/findings via read-only access.
     """
-    ALLOWED = {UserRole.lawyer, UserRole.court, UserRole.auditor, UserRole.admin}
+    ALLOWED = {UserRole.lawyer, UserRole.court, UserRole.auditor, UserRole.admin, UserRole.cfsl, UserRole.io, UserRole.sp, UserRole.dsp}
     if current_user.role not in ALLOWED:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Read-only privileges required.",
+            detail="System access required.",
         )
     return current_user
 

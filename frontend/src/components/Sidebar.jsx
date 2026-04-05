@@ -56,11 +56,28 @@ function Sidebar() {
         <NavItem href="/dashboard" icon={<HiOutlineViewGrid />}>Dashboard</NavItem>
 
         <div className="sidebar-label">Investigation</div>
-        <NavItem href="/fir" icon={<HiOutlineDocumentText />}>FIR Register</NavItem>
-        <NavItem href="/diary" icon={<HiOutlineBookOpen />}>Case Diary</NavItem>
-        <NavItem href="/seizure" icon={<HiOutlineArchive />}>Seizure & Property</NavItem>
-        <NavItem href="/custody" icon={<HiOutlineSwitchHorizontal />}>Chain of Custody</NavItem>
-        <NavItem href="/persons" icon={<HiOutlineUserGroup />}>Person Register</NavItem>
+        {["io", "sp", "dsp", "admin", "court", "lawyer"].includes(role) && (
+          <NavItem href="/fir" icon={<HiOutlineDocumentText />}>FIR Register</NavItem>
+        )}
+        {["io", "sp", "dsp", "admin"].includes(role) && (
+          <NavItem href="/diary" icon={<HiOutlineBookOpen />}>Case Diary</NavItem>
+        )}
+        {["io", "sp", "dsp", "admin", "cfsl", "court", "lawyer"].includes(role) && (
+          <NavItem href="/seizure" icon={<HiOutlineArchive />}>Seizure & Property</NavItem>
+        )}
+        {["io", "sp", "dsp", "admin", "cfsl"].includes(role) && (
+          <NavItem href="/custody" icon={<HiOutlineSwitchHorizontal />}>Chain of Custody</NavItem>
+        )}
+        {["io", "sp", "dsp", "admin", "court", "lawyer"].includes(role) && (
+          <NavItem href="/persons" icon={<HiOutlineUserGroup />}>Person Register</NavItem>
+        )}
+
+        {role === "cfsl" && (
+          <>
+            <div className="sidebar-label">Forensic Lab</div>
+            <NavItem href="/lab-report" icon={<HiOutlineDocumentText />}>Upload Lab Report</NavItem>
+          </>
+        )}
 
         {["io", "sp", "dsp", "admin"].includes(role) && (
           <>
@@ -69,9 +86,13 @@ function Sidebar() {
           </>
         )}
 
-        <div className="sidebar-label">Court & Verify</div>
-        <NavItem href="/court" icon={<HiOutlineScale />}>Court Portal</NavItem>
-        <NavItem href="/verify" icon={<HiOutlineShieldCheck />}>Verify Hash</NavItem>
+        {["io", "sp", "dsp", "admin", "court", "lawyer", "auditor"].includes(role) && (
+          <>
+            <div className="sidebar-label">Court & Verify</div>
+            <NavItem href="/court" icon={<HiOutlineScale />}>Court Portal</NavItem>
+            <NavItem href="/verify" icon={<HiOutlineShieldCheck />}>Verify Hash</NavItem>
+          </>
+        )}
 
         {["admin", "auditor", "sp"].includes(role) && (
           <>

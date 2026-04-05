@@ -78,6 +78,17 @@ const adminService = {
     unwrap(api.patch(`/admin/users/${userId}/activate`, null, { params: { is_active: isActive } })),
 };
 
+// Lab Report & Findings Service
+const findingsService = {
+  uploadLabReport: (firId, formData) =>
+    unwrap(
+      api.post(`/investigation-findings/${firId}/lab-report`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+    ),
+  getLabReports: (firId) => unwrap(api.get(`/investigation-findings/${firId}/lab-reports`)),
+};
+
 export {
   firService,
   diaryService,
@@ -88,4 +99,5 @@ export {
   courtService,
   verificationService,
   adminService,
+  findingsService,
 };

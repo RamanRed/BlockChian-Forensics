@@ -121,6 +121,62 @@ Ensure all 3 layers of the system are running in your terminals:
 
 ---
 
+## Step 8: Supervisor Review (SP / DSP)
+*Supervisory officers reviewing the entire jurisdiction's files.*
+
+1. **Logout** from your IO account.
+2. **Register & Login** with a new account:
+   - **Email:** `sp@dirs.in` (Password: `Password@123`)
+   - **Role:** `sp` (Superintendent of Police) or `dsp`
+3. Navigate through **FIR Management**, **Case Diary**, and **Charge Sheet** tabs.
+4. *Test outcome:* Notice that unlike the IO (who only sees their own assigned cases), the SP/DSP can view `FIR/2026/001`, the Seizure Memos, and the finalized Charge Sheet directly, bypassing the ownership restriction.
+
+---
+
+## Step 9: Forensic Lab Processing (CFSL)
+*Receiving evidence sent via Chain of Custody in Step 5.*
+
+1. **Logout** and **Register & Login** as:
+   - **Email:** `cfsl@dirs.in`
+   - **Role:** `cfsl` (Forensic Scientist)
+2. Navigate to **Chain of Custody** or **Seizure & Property**.
+3. *Test outcome:* You should be able to view the transferred digital evidence (`PROP-01-PEND`) that was handed over to CFSL for deepfake laboratory analysis.
+
+---
+
+## Step 10: Court Trial & Proceedings (Court & Lawyer)
+*Conducting the trial and providing read-only access to defense.*
+
+1. **Logout** and **Register & Login** as the Judge:
+   - **Email:** `judge@dirs.in`
+   - **Role:** `court` (Judicial Officer)
+2. Navigate to the **Court / Verify** section.
+3. You will now see the previously hidden **Add Proceeding** tab (which was locked for the IO).
+4. Fill the details:
+   - **Select Charge Sheet:** Choose the `FIR/2026/001` charge sheet filed in Step 6.
+   - **Hearing Date:** (Pick today's date)
+   - **Next Hearing Date:** (Pick a date next week)
+   - **Judge Notes:** `Initial hearing started. CFSL report on deepfake video admitted as primary evidence. Defense granted access to case files.`
+   - **Order Summary:** `Accused remanded to further judicial custody.`
+5. Click **Save Proceeding**.
+6. **Logout** and **Register & Login** as the Defence:
+   - **Email:** `lawyer@dirs.in`
+   - **Role:** `lawyer` (Defence/Prosecution)
+7. *Test outcome:* Navigate through the system and observe that the lawyer has strict **read-only access** to the final proceedings and unsealed evidence, but cannot add or modify any records.
+
+---
+
+## Step 11: Audit Trail Verification (Auditor / Admin)
+*Checking the immutable operational logs.*
+
+1. **Logout** and **Register & Login** as:
+   - **Email:** `auditor@dirs.in`
+   - **Role:** `auditor`
+2. Navigate to the **Audit / Logs** section (if exposed on your frontend sidebar).
+3. *Test outcome:* You will see a chronological log of every action taken in Steps 1-10 (e.g., who viewed the FIR, who downloaded the video, who transferred custody). This ensures zero-trust compliance against police data tampering.
+
+---
+
 ### Troubleshooting Common Errors during Testing
 - **401 Unauthorized:** Your login JWT session expired. Go back to Login.
 - **409 Conflict (Seizure):** You combined an already existing `SM-2026-001` memo number. Just increment to `002`.
