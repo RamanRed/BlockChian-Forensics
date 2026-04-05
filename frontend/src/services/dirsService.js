@@ -41,6 +41,11 @@ const custodyService = {
 
 // Person Service
 const personService = {
+  list: (params) => unwrap(api.get("/persons/", { params })),
+  register: (data) => unwrap(api.post("/persons/", data)),
+  getById: (personId) => unwrap(api.get(`/persons/${personId}`)),
+  linkToFir: (data) => unwrap(api.post("/persons/link", data)),
+  getCases: (personId) => unwrap(api.get(`/persons/${personId}/cases`)),
 };
 
 // Charge Sheet Service
