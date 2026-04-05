@@ -10,13 +10,27 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 import os, uuid, shutil
 from database import get_db
-from models import User, Evidence, AIStatus
-from schemas import EvidenceUploadResponse, EvidenceListResponse
+from models import User, PropertyRegister, AIStatus
+from pydantic import BaseModel
+class EvidenceUploadResponse(BaseModel):
+    evidence_id: int
+    filename: str
+    ai_score: float
+    ai_status: str
+    blockchain_tx: Optional[str] = None
+
+class EvidenceListResponse(BaseModel):
+    id: int
+    property_number: str
+    description: Optional[str] = None
+    item_type: str
+    ai_status: str
+    blockchain_tx: Optional[str] = None
 from auth.dependencies import get_current_user, require_investigator
 from services.ai_service import analyze_file
 from services.hashing_service import generate_sha256, bind_evidence
 from services.ipfs_service import upload_to_ipfs
-from services.blockchain_service import store_evidence_hash
+from services.blockchain_service import store_record_hash
 from services.audit_service import log_action
 from config import settings
 from utils.logger import setup_logger
@@ -50,7 +64,7 @@ async def upload_evidence(
     file_hash = generate_sha256(file_bytes)
 
     # Check for duplicate
-    existing = db.query(Evidence).filter(Evidence.file_hash == file_hash).first()
+    existing = db.query(PropertyRegister).filter(PropertyRegister.hash_value.like(f'%{file_hash}%')).first()
     if existing:
         raise HTTPException(status_code=409, detail=f"Evidence with this hash already exists (ID: {existing.id})")
 
@@ -82,29 +96,29 @@ async def upload_evidence(
     blockchain_tx = None
     blockchain_block = None
     bound_data = bind_evidence(file_hash, ai_result, {"filename": file.filename, "case": case_number})
-    bc_result = await store_evidence_hash(bound_data)
+    # Use the new unified blockchain service method (store_record_hash)
+    bc_result = await store_record_hash(
+        record_type="evidence",
+        record_id=file_hash[:16],  # Evidence doesn't have a natural human ID, use hash prefix
+        data_hash=bound_data,
+        ipfs_cid=ipfs_cid or ""
+    )
     if bc_result:
         blockchain_tx = bc_result.get("tx_hash")
         blockchain_block = bc_result.get("block_number")
 
     # Step 9: Save to database
-    evidence = Evidence(
-        original_filename=file.filename,
-        stored_filename=stored_filename,
-        file_type=file.content_type,
-        file_size=len(file_bytes),
-        file_hash=file_hash,
-        ipfs_cid=ipfs_cid,
-        storage_path=storage_path,
+    import json
+    evidence = PropertyRegister(
+        seizure_memo_id=int(case_number) if case_number and case_number.isdigit() else 1, # default to memo 1 if missing for testing
+        property_number=f"EVD-{''.join(str(uuid.uuid4()).split('-')[:2])}",
+        item_type="digital",
+        description=description or file.filename,
+        storage_location=storage_path,
+        hash_value=json.dumps({"original": file_hash}),
         ai_score=ai_result.ai_score,
         ai_status=ai_result.status,
-        model_version=ai_result.model_version,
-        manipulation_type=ai_result.manipulation_type,
         blockchain_tx=blockchain_tx,
-        blockchain_block=blockchain_block,
-        uploaded_by=current_user.id,
-        case_number=case_number,
-        description=description,
         is_quarantined=1 if is_suspicious else 0
     )
     db.add(evidence)
@@ -112,7 +126,7 @@ async def upload_evidence(
     db.refresh(evidence)
 
     # Step 10: Log audit
-    log_action(db, user_id=current_user.id, action="EVIDENCE_UPLOADED", evidence_id=evidence.id,
+    log_action(db, user_id=current_user.id, action="EVIDENCE_UPLOADED", property_id=evidence.id,
                details=f"Hash: {file_hash[:16]}... Status: {ai_result.status}",
                ip_address=request.client.host)
 
@@ -127,7 +141,7 @@ async def get_all_evidence(
     current_user: User = Depends(get_current_user)
 ):
     """Get all evidence records (paginated)."""
-    evidence_list = db.query(Evidence).offset(skip).limit(limit).all()
+    evidence_list = db.query(PropertyRegister).offset(skip).limit(limit).all()
     return evidence_list
 
 
@@ -138,8 +152,8 @@ async def get_evidence(
     current_user: User = Depends(get_current_user)
 ):
     """Get a specific evidence record by ID."""
-    evidence = db.query(Evidence).filter(Evidence.id == evidence_id).first()
+    evidence = db.query(PropertyRegister).filter(PropertyRegister.id == evidence_id).first()
     if not evidence:
         raise HTTPException(status_code=404, detail="Evidence not found")
-    log_action(db, user_id=current_user.id, action="EVIDENCE_VIEWED", evidence_id=evidence_id)
+    log_action(db, user_id=current_user.id, action="EVIDENCE_VIEWED", property_id=evidence_id)
     return evidence

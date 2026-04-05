@@ -36,9 +36,11 @@ async def list_seizure_memos(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List all seizure memos."""
-    memos = db.query(SeizureMemo).offset(offset).limit(limit).all()
-    return memos
+    """List all seizure memos scoped by user role."""
+    query = db.query(SeizureMemo)
+    if current_user.role == "io":
+        query = query.filter(SeizureMemo.seized_by == current_user.id)
+    return query.offset(offset).limit(limit).all()
 
 @router.get("/property", response_model=List[PropertyRegisterResponse])
 async def list_properties(
@@ -48,8 +50,12 @@ async def list_properties(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """List all registered properties."""
+    """List all registered properties scoped by user role."""
     query = db.query(PropertyRegister)
+    
+    if current_user.role == "io":
+        query = query.join(SeizureMemo).filter(SeizureMemo.seized_by == current_user.id)
+        
     if seizure_memo_id is not None:
         query = query.filter(PropertyRegister.seizure_memo_id == seizure_memo_id)
     return query.offset(offset).limit(limit).all()
@@ -132,6 +138,10 @@ async def get_seizure_memo(
     memo = db.query(SeizureMemo).filter(SeizureMemo.id == memo_id).first()
     if not memo:
         raise HTTPException(status_code=404, detail="Seizure Memo not found.")
+    
+    if current_user.role == "io" and memo.seized_by != current_user.id:
+        raise HTTPException(status_code=403, detail="Access denied. You did not create this memo.")
+        
     log_action(db, user_id=current_user.id, action="SEIZURE_MEMO_VIEWED",
                fir_id=memo.fir_id, ip_address=request.client.host)
     return memo

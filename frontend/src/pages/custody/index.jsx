@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 import { useFetch } from "../../hooks/useFetch";
-import { custodyService } from "../../services/dirsService";
+import { custodyService, seizureService } from "../../services/dirsService";
 import { HiOutlineSwitchHorizontal } from "react-icons/hi";
 
 function CustodyPage() {
@@ -13,6 +13,12 @@ function CustodyPage() {
     movement_date: new Date().toISOString().slice(0, 16), lab_case_number: "",
   });
   const [transferring, setTransferring] = useState(false);
+
+  const { data: propertiesData } = useFetch(
+    () => seizureService.listProperties({ limit: 100 }),
+    []
+  );
+  const properties = Array.isArray(propertiesData) ? propertiesData : [];
 
   const { data: history, loading, refetch } = useFetch(
     () => searched ? custodyService.getHistory(searched) : Promise.resolve([]),
@@ -54,8 +60,15 @@ function CustodyPage() {
           <h3 style={{ marginTop: 0 }}>Record Transfer</h3>
           <form onSubmit={handleTransfer}>
             <div className="form-group">
-              <label>Property ID *</label>
-              <input className="input" type="number" value={form.property_id} onChange={set("property_id")} required />
+              <label>Property *</label>
+              <select className="input" value={form.property_id} onChange={set("property_id")} required>
+                <option value="">— Select Property —</option>
+                {properties.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.property_number} ({p.item_type}) - ID: {p.id}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="form-group">
               <label>Transfer To *</label>
@@ -85,8 +98,15 @@ function CustodyPage() {
         <div style={{ flex: 1.5 }}>
           <h3 style={{ marginBottom: "1rem" }}>View Custody Chain</h3>
           <div style={{ display: "flex", gap: "0.75rem", marginBottom: "1.5rem" }}>
-            <input className="input" type="number" value={propertyId} onChange={(e) => setPropertyId(e.target.value)} placeholder="Property ID" style={{ maxWidth: 150 }} />
-            <button className="btn btn-secondary" onClick={() => setSearched(propertyId)}>Load Chain</button>
+            <select className="input" value={propertyId} onChange={(e) => setPropertyId(e.target.value)} style={{ maxWidth: 300 }}>
+              <option value="">— Select Property —</option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.property_number} - ID: {p.id}
+                </option>
+              ))}
+            </select>
+            <button className="btn btn-secondary" onClick={() => setSearched(propertyId)} disabled={!propertyId}>Load Chain</button>
           </div>
 
           {loading && <Loader />}

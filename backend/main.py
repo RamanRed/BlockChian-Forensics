@@ -25,6 +25,7 @@ from routes.court_routes       import router as court_router
 from routes.verification_routes import router as verification_router
 from routes.admin_routes       import router as admin_router
 from routes.lawyer_routes      import router as lawyer_router
+from routes.evidence_routes    import router as evidence_router
 from routes.investigation_findings_routes import router as findings_router
 from utils.logger import setup_logger
 
@@ -141,6 +142,7 @@ app.include_router(chargesheet_router,   prefix="/api/chargesheet",  tags=["Char
 app.include_router(court_router,         prefix="/api/court",        tags=["Court"])
 app.include_router(verification_router,  prefix="/api/verify",       tags=["Verification"])
 app.include_router(admin_router,         prefix="/api/admin",        tags=["Admin"])
+app.include_router(evidence_router,      prefix="/api/evidence",     tags=["Evidence"])
 app.include_router(lawyer_router,        prefix="/api")
 app.include_router(findings_router,      prefix="/api")
 

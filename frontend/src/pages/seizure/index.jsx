@@ -10,7 +10,7 @@ function SeizurePage() {
   const { data: firData } = useFetch(() => firService.list({ limit: 100 }), []);
   const firs = Array.isArray(firData) ? firData : [];
 
-  const { data: memosData, loading: memosLoading } = useFetch(
+  const { data: memosData, loading: memosLoading, refetch: refetchMemos } = useFetch(
     () => seizureService.listMemos({ limit: 100 }),
     []
   );
@@ -36,6 +36,7 @@ function SeizurePage() {
       const payload = { ...memo, fir_id: parseInt(memo.fir_id), date_time: new Date(memo.date_time).toISOString() };
       await seizureService.createMemo(payload);
       toast.success("Seizure Memo created ✓");
+      refetchMemos();
       setMemo({ fir_id: "", memo_number: "", date_time: new Date().toISOString().slice(0, 16), place_of_seizure: "", witness_1_name: "", witness_1_contact: "", witness_2_name: "", witness_2_contact: "", items_description: "" });
     } catch (err) {
       toast.error(err.response?.data?.detail?.message || err.response?.data?.detail || "Failed");
@@ -156,8 +157,15 @@ function SeizurePage() {
           <form onSubmit={handleUploadSubmit}>
             <div className="form-row">
               <div className="form-group">
-                <label>Seizure Memo ID *</label>
-                <input className="input" type="number" value={upload.seizure_memo_id} onChange={setU("seizure_memo_id")} required />
+                <label>Seizure Memo *</label>
+                <select className="input" value={upload.seizure_memo_id} onChange={setU("seizure_memo_id")} required>
+                  <option value="">— Select Seizure Memo —</option>
+                  {memos.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.memo_number} (FIR: {m.fir_id})
+                    </option>
+                  ))}
+                </select>
               </div>
               <div className="form-group">
                 <label>Property Number *</label>

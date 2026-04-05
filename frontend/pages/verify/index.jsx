@@ -1,5 +1,5 @@
-import ProtectedRoute from "../src/components/ProtectedRoute";
-import VerifyPage from "../src/pages/verify/index";
+import ProtectedRoute from "../../src/components/ProtectedRoute";
+import VerifyPage from "../../src/pages/verify/index";
 
 export default function VerifyPageRoute() {
   return (

@@ -1,78 +1,81 @@
 import api from "./api";
 
+// Helper to unwrap axios response
+const unwrap = (promise) => promise.then((res) => res.data);
+
 // FIR Service
 const firService = {
-  register: (data) => api.post("/fir/register", data),
+  register: (data) => unwrap(api.post("/fir/register", data)),
   correct: (firId, note) =>
-    api.post(`/fir/${firId}/correct`, null, { params: { correction_note: note } }),
-  updateStatus: (firId, data) => api.patch(`/fir/${firId}/status`, data),
-  getById: (firId) => api.get(`/fir/${firId}`),
-  list: (params) => api.get("/fir/", { params }),
+    unwrap(api.post(`/fir/${firId}/correct`, null, { params: { correction_note: note } })),
+  updateStatus: (firId, data) => unwrap(api.patch(`/fir/${firId}/status`, data)),
+  getById: (firId) => unwrap(api.get(`/fir/${firId}`)),
+  list: (params) => unwrap(api.get("/fir/", { params })),
 };
 
 // Case Diary Service
 const diaryService = {
-  addEntry: (firId, data) => api.post(`/diary/${firId}/entry`, data),
-  getEntries: (firId) => api.get(`/diary/${firId}`),
+  addEntry: (firId, data) => unwrap(api.post(`/diary/${firId}/entry`, data)),
+  getEntries: (firId) => unwrap(api.get(`/diary/${firId}`)),
 };
 
 // Seizure & Property Service
 const seizureService = {
-  createMemo: (data) => api.post("/seizure/memo", data),
-  getMemo: (memoId) => api.get(`/seizure/memo/${memoId}`),
-  listMemos: (params) => api.get("/seizure/memo", { params }),
+  createMemo: (data) => unwrap(api.post("/seizure/memo", data)),
+  getMemo: (memoId) => unwrap(api.get(`/seizure/memo/${memoId}`)),
+  listMemos: (params) => unwrap(api.get("/seizure/memo", { params })),
   uploadProperty: (formData) =>
-    api.post("/seizure/property/upload", formData, {
+    unwrap(api.post("/seizure/property/upload", formData, {
       headers: { "Content-Type": "multipart/form-data" },
-    }),
-  getProperty: (propertyId) => api.get(`/seizure/property/${propertyId}`),
-  listProperties: (params) => api.get("/seizure/property", { params }),
+    })),
+  getProperty: (propertyId) => unwrap(api.get(`/seizure/property/${propertyId}`)),
+  listProperties: (params) => unwrap(api.get("/seizure/property", { params })),
 };
 
 // Chain of Custody Service
 const custodyService = {
-  transfer: (data) => api.post("/custody/transfer", data),
-  getHistory: (propertyId) => api.get(`/custody/${propertyId}`),
+  transfer: (data) => unwrap(api.post("/custody/transfer", data)),
+  getHistory: (propertyId) => unwrap(api.get(`/custody/${propertyId}`)),
 };
 
 // Person Service
 const personService = {
-  register: (data) => api.post("/persons/", data),
-  getById: (personId) => api.get(`/persons/${personId}`),
-  linkToFir: (data) => api.post("/persons/link", data),
-  getCases: (personId) => api.get(`/persons/${personId}/cases`),
-  list: (params) => api.get("/persons/", { params }),
+  register: (data) => unwrap(api.post("/persons/", data)),
+  getById: (personId) => unwrap(api.get(`/persons/${personId}`)),
+  linkToFir: (data) => unwrap(api.post("/persons/link", data)),
+  getCases: (personId) => unwrap(api.get(`/persons/${personId}/cases`)),
+  list: (params) => unwrap(api.get("/persons/", { params })),
 };
 
 // Charge Sheet Service
 const chargesheetService = {
-  create: (data) => api.post("/chargesheet/", data),
-  file: (csId) => api.post(`/chargesheet/${csId}/file`),
-  getById: (csId) => api.get(`/chargesheet/${csId}`),
-  list: (params) => api.get("/chargesheet/", { params }),
+  create: (data) => unwrap(api.post("/chargesheet/", data)),
+  file: (csId) => unwrap(api.post(`/chargesheet/${csId}/file`)),
+  getById: (csId) => unwrap(api.get(`/chargesheet/${csId}`)),
+  list: (params) => unwrap(api.get("/chargesheet/", { params })),
 };
 
 // Court & Public Verification Service
 const courtService = {
-  publicVerify: (hash) => api.get(`/court/verify/${hash}`),
-  addProceeding: (data) => api.post("/court/proceedings", data),
-  getProceedings: (csId) => api.get(`/court/proceedings/${csId}`),
+  publicVerify: (hash) => api.get(`/court/verify/${hash}`), // Used differently in VerifyPage
+  addProceeding: (data) => unwrap(api.post("/court/proceedings", data)),
+  getProceedings: (csId) => unwrap(api.get(`/court/proceedings/${csId}`)),
 };
 
 // Verification Service
 const verificationService = {
-  verifyFir: (firId) => api.get(`/verify/fir/${firId}`),
-  verifyProperty: (propertyId) => api.get(`/verify/property/${propertyId}`),
+  verifyFir: (firId) => unwrap(api.get(`/verify/fir/${firId}`)),
+  verifyProperty: (propertyId) => unwrap(api.get(`/verify/property/${propertyId}`)),
 };
 
 // Admin Service
 const adminService = {
-  getAuditLogs: (params) => api.get("/admin/audit/logs", { params }),
-  getQuarantine: () => api.get("/admin/quarantine"),
-  getUsers: () => api.get("/admin/users"),
-  updateRole: (userId, role) => api.patch(`/admin/users/${userId}/role`, null, { params: { role } }),
+  getAuditLogs: (params) => unwrap(api.get("/admin/audit/logs", { params })),
+  getQuarantine: () => unwrap(api.get("/admin/quarantine")),
+  getUsers: () => unwrap(api.get("/admin/users")),
+  updateRole: (userId, role) => unwrap(api.patch(`/admin/users/${userId}/role`, null, { params: { role } })),
   toggleActive: (userId, isActive) =>
-    api.patch(`/admin/users/${userId}/activate`, null, { params: { is_active: isActive } }),
+    unwrap(api.patch(`/admin/users/${userId}/activate`, null, { params: { is_active: isActive } })),
 };
 
 export {
