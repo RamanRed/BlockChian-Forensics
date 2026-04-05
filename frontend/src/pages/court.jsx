@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
 import { toast } from "react-toastify";
 import Loader from "../components/Loader";
 import { useFetch } from "../hooks/useFetch";
 import { courtService, chargesheetService, firService } from "../services/dirsService";
+import { AuthContext } from "../context/AuthContext";
 import {
   HiOutlineScale,
   HiOutlineSearch,
@@ -37,6 +38,18 @@ function CourtPage() {
     [searchedCs]
   );
   const proceedings = Array.isArray(procData) ? procData : [];
+
+  const { user, role } = useContext(AuthContext);
+  
+  // Sort chargesheets so the officer's own cases are on top
+  const sortedChargesheets = [...chargesheets].sort((a, b) => {
+    if (!user) return 0;
+    const aIsMine = a.filed_by_io_id === user.id;
+    const bIsMine = b.filed_by_io_id === user.id;
+    if (aIsMine && !bIsMine) return -1;
+    if (!aIsMine && bIsMine) return 1;
+    return 0;
+  });
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -74,9 +87,11 @@ function CourtPage() {
         <button className={tab === "proceedings" ? "btn" : "btn btn-secondary"} onClick={() => setTab("proceedings")}>
           <HiOutlineScale style={{ verticalAlign: "middle", marginRight: 4 }} /> Proceedings
         </button>
-        <button className={tab === "add" ? "btn" : "btn btn-secondary"} onClick={() => setTab("add")}>
-          <HiOutlinePlus style={{ verticalAlign: "middle", marginRight: 4 }} /> Add Proceeding
-        </button>
+        {role === "court" && (
+          <button className={tab === "add" ? "btn" : "btn btn-secondary"} onClick={() => setTab("add")}>
+            <HiOutlinePlus style={{ verticalAlign: "middle", marginRight: 4 }} /> Add Proceeding
+          </button>
+        )}
       </div>
 
       {tab === "add" && (
@@ -88,9 +103,14 @@ function CourtPage() {
                 <label>Charge Sheet *</label>
                 <select className="input" value={form.chargesheet_id} onChange={set("chargesheet_id")} required>
                   <option value="">— Select Charge Sheet —</option>
-                  {chargesheets.map((cs) => (
-                    <option key={cs.id} value={cs.id}>{cs.chargesheet_number}</option>
-                  ))}
+                  {sortedChargesheets.map((cs) => {
+                    const isMine = user && cs.filed_by_io_id === user.id;
+                    return (
+                      <option key={cs.id} value={cs.id}>
+                        {isMine ? "⭐ [Your Case] " : ""}{cs.chargesheet_number}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div className="form-group">
@@ -132,9 +152,14 @@ function CourtPage() {
                 <label>Charge Sheet</label>
                 <select className="input" value={csId} onChange={(e) => setCsId(e.target.value)}>
                   <option value="">— Select Charge Sheet —</option>
-                  {chargesheets.map((cs) => (
-                    <option key={cs.id} value={cs.id}>{cs.chargesheet_number}</option>
-                  ))}
+                  {sortedChargesheets.map((cs) => {
+                    const isMine = user && cs.filed_by_io_id === user.id;
+                    return (
+                      <option key={cs.id} value={cs.id}>
+                        {isMine ? "⭐ [Your Case] " : ""}{cs.chargesheet_number}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <button
