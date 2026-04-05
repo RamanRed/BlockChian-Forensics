@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Loader from "../components/Loader";
 import { HiOutlineDocumentText } from "react-icons/hi";
 import { findingsService, firService } from "../services/dirsService";
 import { useFetch } from "../hooks/useFetch";
+import { useAuth } from "../hooks/useAuth";
 
 function LabReport() {
-  const [tab, setTab] = useState("upload");
+  const { role } = useAuth();
+  const [tab, setTab] = useState(role === "cfsl" ? "upload" : "view");
   const [form, setForm] = useState({
     firId: "",
     title: "",
@@ -81,11 +83,13 @@ function LabReport() {
       </div>
 
       <div className="filter-row">
-        <button className={tab === "upload" ? "btn" : "btn btn-secondary"} onClick={() => setTab("upload")}>Upload Lab Report</button>
+        {role === "cfsl" && (
+          <button className={tab === "upload" ? "btn" : "btn btn-secondary"} onClick={() => setTab("upload")}>Upload Lab Report</button>
+        )}
         <button className={tab === "view" ? "btn" : "btn btn-secondary"} onClick={() => setTab("view")}>View Network Reports</button>
       </div>
 
-      {tab === "upload" && (
+      {tab === "upload" && role === "cfsl" && (
         <div className="form-card">
           <h3>Submit New Forensic Analysis</h3>
           <p className="text-muted" style={{ marginBottom: "1rem" }}>Your findings will be immutably linked to the case timeline.</p>
@@ -162,7 +166,19 @@ function LabReport() {
               </div>
               <p style={{ marginTop: "0.5rem" }}>{report.description}</p>
               {report.lab_reference_number && <p className="text-sm text-muted"><strong>Ref:</strong> {report.lab_reference_number}</p>}
-              <div className="hash-mono" style={{ marginTop: "0.5rem" }}>Hash: {report.file_hash.substring(0,24)}...</div>
+              <div className="flex-between" style={{ marginTop: "1rem" }}>
+                <div className="hash-mono">Hash: {report.file_hash.substring(0, 24)}...</div>
+                {report.ipfs_cid && (
+                  <a 
+                    href={`https://gateway.pinata.cloud/ipfs/${report.ipfs_cid}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="btn btn-sm btn-secondary"
+                  >
+                    Download Findings
+                  </a>
+                )}
+              </div>
             </div>
           ))}
         </div>
