@@ -308,7 +308,7 @@ function CourtCaseDetailPage() {
           ) : (
             <div style={{ maxWidth: 800 }}>
               {timeline.map((event, idx) => (
-                <TimelineEvent key={idx} event={event} />
+                <TimelineEvent key={idx} event={event} timeline={timeline} index={idx} />
               ))}
             </div>
           )}
