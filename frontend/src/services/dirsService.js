@@ -36,15 +36,11 @@ const seizureService = {
 const custodyService = {
   transfer: (data) => unwrap(api.post("/custody/transfer", data)),
   getHistory: (propertyId) => unwrap(api.get(`/custody/${propertyId}`)),
+  getAvailableLabs: () => unwrap(api.get("/auth/users/cfsl")),
 };
 
 // Person Service
 const personService = {
-  register: (data) => unwrap(api.post("/persons/", data)),
-  getById: (personId) => unwrap(api.get(`/persons/${personId}`)),
-  linkToFir: (data) => unwrap(api.post("/persons/link", data)),
-  getCases: (personId) => unwrap(api.get(`/persons/${personId}/cases`)),
-  list: (params) => unwrap(api.get("/persons/", { params })),
 };
 
 // Charge Sheet Service

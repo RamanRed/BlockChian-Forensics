@@ -3,13 +3,14 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import Loader from "../../components/Loader";
 import { useFetch } from "../../hooks/useFetch";
-import { firService } from "../../services/dirsService";
+import { firService, findingsService } from "../../services/dirsService";
 import { toast } from "react-toastify";
 import {
   HiOutlineDocumentText,
   HiOutlineLockClosed,
   HiOutlinePencil,
   HiOutlineRefresh,
+  HiOutlineClipboardList
 } from "react-icons/hi";
 
 function FIRDetail() {
@@ -26,6 +27,12 @@ function FIRDetail() {
     [id]
   );
   const firData = fir?.data || fir;
+
+  const { data: labReportsData, loading: labLoading } = useFetch(
+    () => (id ? findingsService.getLabReports(id) : Promise.resolve([])),
+    [id]
+  );
+  const labReports = Array.isArray(labReportsData) ? labReportsData : [];
 
   const handleCorrection = async (e) => {
     e.preventDefault();
@@ -166,6 +173,49 @@ function FIRDetail() {
           </div>
         )}
       </div>
+
+      {/* Forensic Lab Reports */}
+      {labReports?.length > 0 && (
+        <div className="form-card">
+          <h3 style={{ marginTop: 0 }}>
+            <HiOutlineClipboardList style={{ verticalAlign: "middle", marginRight: 6 }} />
+            Forensic & Lab Reports
+          </h3>
+          <p className="page-subtitle" style={{ fontSize: "0.85rem", marginBottom: "1rem" }}>Reports submitted by CFSL against properties seized in this FIR</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            {labReports.map((report) => (
+              <div key={report.id} className="evidence-card" style={{ padding: "1rem 1.25rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 8 }}>
+                  <div>
+                    <h4 style={{ margin: "0 0 4px", color: "var(--primary)", fontSize: "0.95rem" }}>{report.title}</h4>
+                    <span className="text-muted" style={{ fontSize: "0.8rem" }}>
+                      Lab: {report.lab_name} {report.lab_reference_number ? `(Ref: ${report.lab_reference_number})` : ""}
+                    </span>
+                  </div>
+                  <span className="text-muted" style={{ fontSize: "0.8rem" }}>
+                    {new Date(report.recorded_at).toLocaleString("en-IN")}
+                  </span>
+                </div>
+                {report.description && <p style={{ fontSize: "0.85rem", margin: "8px 0" }}>{report.description}</p>}
+                
+                {report.ipfs_cid && (
+                  <div style={{ marginTop: "10px" }}>
+                    <a
+                      href={`https://gateway.pinata.cloud/ipfs/${report.ipfs_cid}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn btn-secondary"
+                      style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "0.3rem 0.75rem", fontSize: "0.8rem" }}
+                    >
+                      <HiOutlineDocumentText /> View Full Finding Report
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Correction History */}
       {firData.correction_notes?.length > 0 && (

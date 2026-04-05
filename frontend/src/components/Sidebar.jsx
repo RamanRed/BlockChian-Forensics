@@ -75,10 +75,8 @@ function Sidebar() {
         {role === "cfsl" && (
           <>
             <div className="sidebar-label">Forensic Lab</div>
-            <NavItem href="/lab-report" icon={<HiOutlineDocumentText />}>Upload Lab Report</NavItem>
           </>
         )}
-        
         {["io", "sp", "dsp", "court", "lawyer", "admin"].includes(role) && (
           <NavItem href="/lab-report" icon={<HiOutlineDocumentText />}>Forensic Reports</NavItem>
         )}

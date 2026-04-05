@@ -3,8 +3,10 @@ import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 import { useFetch } from "../../hooks/useFetch";
 import { firService, seizureService } from "../../services/dirsService";
+import { useAuth } from "../../hooks/useAuth";
 
 function SeizurePage() {
+  const { role } = useAuth();
   const [tab, setTab] = useState("list"); // list | memo | upload
   const [loading, setLoading] = useState(false);
   const { data: firData } = useFetch(() => firService.list({ limit: 100 }), []);
@@ -73,9 +75,13 @@ function SeizurePage() {
       </div>
 
       <div className="filter-row">
-        <button className={tab === "list" ? "btn" : "btn btn-secondary"} onClick={() => setTab("list")}>View Memos</button>
-        <button className={tab === "memo" ? "btn" : "btn btn-secondary"} onClick={() => setTab("memo")}>Create Seizure Memo</button>
-        <button className={tab === "upload" ? "btn" : "btn btn-secondary"} onClick={() => setTab("upload")}>Register Digital Evidence</button>
+        <button className={tab === "list" ? "btn" : "btn btn-secondary"} onClick={() => setTab("list")}>{role === "cfsl" ? "Search Evidence Memos" : "View Memos"}</button>
+        {role !== "cfsl" && (
+          <>
+            <button className={tab === "memo" ? "btn" : "btn btn-secondary"} onClick={() => setTab("memo")}>Create Seizure Memo</button>
+            <button className={tab === "upload" ? "btn" : "btn btn-secondary"} onClick={() => setTab("upload")}>Register Digital Evidence</button>
+          </>
+        )}
       </div>
 
       {tab === "list" && (
@@ -106,7 +112,7 @@ function SeizurePage() {
         </div>
       )}
 
-      {tab === "memo" && (
+      {tab === "memo" && role !== "cfsl" && (
         <div className="form-card">
           <h3 style={{ marginTop: 0 }}>Create Seizure Memo</h3>
           <form onSubmit={handleMemoSubmit}>
@@ -150,7 +156,7 @@ function SeizurePage() {
         </div>
       )}
 
-      {tab === "upload" && (
+      {tab === "upload" && role !== "cfsl" && (
         <div className="form-card">
           <h3 style={{ marginTop: 0 }}>Register Digital Evidence Item</h3>
           <p className="text-muted" style={{ marginBottom: "1rem" }}>File will be SHA-256 hashed, AI-analysed, and blockchain-anchored.</p>

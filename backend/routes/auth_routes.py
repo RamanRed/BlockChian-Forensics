@@ -58,3 +58,10 @@ async def login(credentials: UserLogin, request: Request, db: Session = Depends(
 async def get_me(current_user: User = Depends(get_current_user)):
     """Get current authenticated user's profile."""
     return current_user
+
+from typing import List
+@router.get("/users/{role}", response_model=List[UserResponse])
+async def get_users_by_role(role: str, db: Session = Depends(get_db)):
+    """Get users filtered by role to populate transfer/assign dropdowns."""
+    users = db.query(User).filter(User.role == role, User.is_active == 1).all()
+    return users
