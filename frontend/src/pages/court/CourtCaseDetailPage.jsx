@@ -19,78 +19,8 @@ import {
   HiOutlineCheckCircle,
   HiOutlineClock,
 } from "react-icons/hi";
+import TimelineEvent, { EVENT_CONFIG } from "../../components/TimelineEvent";
 
-/* ── Event type config ───────────────────────────────────────── */
-const EVENT_CONFIG = {
-  fir_registered:        { icon: <HiOutlineDocumentText />, label: "FIR Registered",         color: "#4f46e5", bg: "#4f46e510" },
-  diary_entry:           { icon: <HiOutlineBookOpen />,     label: "Case Diary Entry",        color: "#0891b2", bg: "#0891b210" },
-  seizure_memo:          { icon: <HiOutlineArchive />,      label: "Seizure Memo",             color: "#7c3aed", bg: "#7c3aed10" },
-  evidence_registered:   { icon: <HiOutlineArchive />,      label: "Evidence Registered",      color: "#059669", bg: "#05966910" },
-  custody_transfer:      { icon: <HiOutlineSwitchHorizontal />, label: "Custody Transfer",    color: "#d97706", bg: "#d9770610" },
-  forensic_submission:   { icon: <HiOutlineBeaker />,       label: "Forensic Submission",      color: "#0e7490", bg: "#0e749010" },
-  investigation_finding: { icon: <HiOutlineLightningBolt />,label: "Investigation Finding",    color: "#6366f1", bg: "#6366f110" },
-  chargesheet_filed:     { icon: <HiOutlineClipboardCheck />,label: "Chargesheet Filed",       color: "#dc2626", bg: "#dc262610" },
-  court_proceeding:      { icon: <HiOutlineScale />,        label: "Court Proceeding",         color: "#be185d", bg: "#be185d10" },
-  court_verdict:         { icon: <HiOutlineScale />,        label: "Court Verdict",            color: "#dc2626", bg: "#dc262620" },
-  lab_report:            { icon: <HiOutlineBeaker />,       label: "Forensic Lab Report",      color: "#059669", bg: "#05966910" },
-};
-
-/* ── Timeline Event Card ─────────────────────────────────────── */
-function TimelineEvent({ event }) {
-  const cfg = EVENT_CONFIG[event.type] || { icon: <HiOutlineEye />, label: event.type, color: "#64748b", bg: "#64748b10" };
-  const data = event.data || {};
-  const ts = event.timestamp
-    ? new Date(event.timestamp).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })
-    : "";
-
-  return (
-    <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem" }}>
-      {/* Dot + Line */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", width: 40 }}>
-        <div style={{
-          width: 36, height: 36, borderRadius: "10px",
-          background: cfg.bg, border: `2px solid ${cfg.color}`,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          color: cfg.color, fontSize: "1rem", flexShrink: 0,
-        }}>
-          {cfg.icon}
-        </div>
-        <div style={{ width: 2, flex: 1, background: "var(--border)", marginTop: 4 }} />
-      </div>
-      {/* Content */}
-      <div style={{
-        flex: 1, background: "var(--card-bg)", border: "1px solid var(--border)",
-        borderRadius: "10px", padding: "1rem 1.25rem", borderLeft: `3px solid ${cfg.color}`,
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.5rem" }}>
-          <span style={{ fontWeight: 700, fontSize: "0.9rem", color: cfg.color }}>{cfg.label}</span>
-          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", whiteSpace: "nowrap" }}>{ts}</span>
-        </div>
-        <div style={{ fontSize: "0.85rem", lineHeight: 1.7 }}>
-          {Object.entries(data)
-            .filter(([k, v]) => v && k !== "blockchain_tx" && k !== "ipfs_cid")
-            .map(([k, v]) => (
-              <div key={k}>
-                <span style={{ color: "var(--text-muted)", fontWeight: 500 }}>
-                  {k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase())}:
-                </span>{" "}
-                <span>{String(v).length > 200 ? String(v).slice(0, 200) + "…" : String(v)}</span>
-              </div>
-            ))}
-        </div>
-        {data.blockchain_tx && (
-          <div style={{
-            marginTop: "0.5rem", padding: "4px 8px", background: "#05966915",
-            borderRadius: "6px", fontSize: "0.75rem", color: "#059669",
-            fontFamily: "monospace", display: "inline-flex", alignItems: "center", gap: 6,
-          }}>
-            <HiOutlineShieldCheck /> {data.blockchain_tx.slice(0, 24)}…
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 /* ── Diary Entry Card (Court read-only view) ─────────────────── */
 function DiaryCard({ entry }) {
