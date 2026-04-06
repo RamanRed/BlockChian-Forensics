@@ -2,7 +2,7 @@ import { useState } from "react";
 import { toast } from "react-toastify";
 import Loader from "../../components/Loader";
 import { useFetch } from "../../hooks/useFetch";
-import { chargesheetService, firService } from "../../services/dirsService";
+import { chargesheetService, firService, courtService } from "../../services/dirsService";
 import { HiOutlineClipboardCheck } from "react-icons/hi";
 import Link from "next/link";
 
@@ -10,11 +10,14 @@ function ChargesheetPage() {
   const [tab, setTab] = useState("list");
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    fir_id: "", chargesheet_number: "", offence_summary: "", io_conclusion: "",
+    fir_id: "", chargesheet_number: "", offence_summary: "", io_conclusion: "", assigned_court_id: "",
   });
 
   const { data: firData } = useFetch(() => firService.list({ limit: 100 }), []);
   const firs = Array.isArray(firData) ? firData : [];
+
+  const { data: courtData } = useFetch(() => courtService.listCourts(), []);
+  const courts = Array.isArray(courtData) ? courtData : [];
 
   const { data: csData, loading: csLoading, refetch } = useFetch(
     () => chargesheetService.list({ limit: 100 }),
@@ -28,10 +31,14 @@ function ChargesheetPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const payload = { ...form, fir_id: parseInt(form.fir_id) };
+      const payload = {
+        ...form,
+        fir_id: parseInt(form.fir_id),
+        assigned_court_id: form.assigned_court_id ? parseInt(form.assigned_court_id) : null,
+      };
       await chargesheetService.create(payload);
       toast.success("Charge Sheet draft created ✓");
-      setForm({ fir_id: "", chargesheet_number: "", offence_summary: "", io_conclusion: "" });
+      setForm({ fir_id: "", chargesheet_number: "", offence_summary: "", io_conclusion: "", assigned_court_id: "" });
       setTab("list");
       refetch();
     } catch (err) {
@@ -79,6 +86,19 @@ function ChargesheetPage() {
                 <input className="input" value={form.chargesheet_number} onChange={set("chargesheet_number")} required />
               </div>
             </div>
+            <div className="form-row">
+              <div className="form-group">
+                <label>Assign to Court</label>
+                <select className="input" value={form.assigned_court_id} onChange={set("assigned_court_id")}>
+                  <option value="">— Select Court (Optional) —</option>
+                  {courts.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}{c.district ? ` — ${c.district}` : ""}{c.police_station ? ` (${c.police_station})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="form-group">
               <label>Offence Summary *</label>
               <textarea className="input" rows={4} value={form.offence_summary} onChange={set("offence_summary")} required />
@@ -105,13 +125,20 @@ function ChargesheetPage() {
             <div className="table-wrap">
               <table className="table">
                 <thead>
-                  <tr><th>CS Number</th><th>FIR ID</th><th>Status</th><th>Created</th><th>Hash</th><th>Actions</th></tr>
+                  <tr><th>CS Number</th><th>FIR ID</th><th>Assigned Court</th><th>Status</th><th>Created</th><th>Hash</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                   {sheets.map((cs) => (
                     <tr key={cs.id}>
                       <td><strong>{cs.chargesheet_number}</strong></td>
                       <td>{cs.fir_id}</td>
+                      <td>
+                        {cs.assigned_court_name ? (
+                          <span className="badge badge-blue">{cs.assigned_court_name}</span>
+                        ) : (
+                          <span className="text-muted">—</span>
+                        )}
+                      </td>
                       <td>
                         <span className={`badge badge-${cs.status === "filed" ? "green" : cs.status === "draft" ? "yellow" : "blue"}`}>
                           {cs.status?.toUpperCase()}

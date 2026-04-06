@@ -89,6 +89,7 @@ const courtService = {
   getProceedings: (csId) => unwrap(api.get(`/court/proceedings/${csId}`)),
   listCases: () => unwrap(api.get("/court/cases")),
   getChainOfEvents: (firId) => unwrap(api.get(`/court/chain/${firId}`)),
+  listCourts: () => unwrap(api.get("/auth/users/court")),
 };
 
 // Verdict Service

@@ -66,6 +66,16 @@ function ChargesheetDetail() {
             </div>
           </div>
           <div className="detail-item">
+            <label>Assigned Court</label>
+            <div className="detail-value">
+              {cs.assigned_court_name ? (
+                <span className="badge badge-blue">{cs.assigned_court_name}</span>
+              ) : (
+                <span className="text-muted">Not assigned</span>
+              )}
+            </div>
+          </div>
+          <div className="detail-item">
             <label>Created At</label>
             <div className="detail-value">
               {cs.created_at ? new Date(cs.created_at).toLocaleString("en-IN") : "—"}

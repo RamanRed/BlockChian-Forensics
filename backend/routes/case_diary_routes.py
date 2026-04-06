@@ -17,7 +17,7 @@ import hashlib, json
 from database import get_db
 from models import User, FIR, CaseDiaryEntry
 from schemas import CaseDiaryCreate, CaseDiaryResponse
-from auth.dependencies import get_current_user, require_investigator
+from auth.dependencies import get_current_user, require_investigator, require_read_only
 from services.blockchain_service import store_record_hash
 from services.audit_service import log_action
 from utils.logger import setup_logger
@@ -96,7 +96,7 @@ async def get_diary(
     fir_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_read_only),
 ):
     """
     Retrieve all Case Diary entries for an FIR in chronological order.

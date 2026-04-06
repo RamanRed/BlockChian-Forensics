@@ -17,7 +17,7 @@ import hashlib, json
 from database import get_db
 from models import User, FIR, AuditLog, FIRStatus
 from schemas import FIRCreate, FIRResponse, FIRStatusUpdate
-from auth.dependencies import get_current_user, require_investigator
+from auth.dependencies import get_current_user, require_investigator, require_read_only
 from services.blockchain_service import store_record_hash
 from services.audit_service import log_action
 from utils.logger import setup_logger
@@ -159,7 +159,7 @@ async def get_fir(
     fir_id: int,
     request: Request,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_read_only),
 ):
     """Retrieve FIR by ID. Every access is logged (Section 6.2 — Zero-Trust Audit)."""
     fir = db.query(FIR).filter(FIR.id == fir_id).first()
@@ -177,7 +177,7 @@ async def list_firs(
     limit: int = 50,
     status_filter: Optional[FIRStatus] = None,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_read_only),
 ):
     """List FIRs. IO sees only their assigned FIRs; SP/Admin see all."""
     query = db.query(FIR)

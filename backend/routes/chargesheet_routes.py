@@ -15,7 +15,7 @@ from typing import List
 import hashlib, json
 
 from database import get_db
-from models import User, FIR, ChargeSheet, ChargesheetStatus, FIRStatus
+from models import User, FIR, ChargeSheet, ChargesheetStatus, FIRStatus, UserRole
 from schemas import ChargesheetCreate, ChargesheetResponse
 from auth.dependencies import get_current_user, require_investigator
 from services.blockchain_service import store_record_hash
@@ -47,11 +47,22 @@ async def create_chargesheet(
     if existing:
         raise HTTPException(status_code=409, detail=f"Charge Sheet number '{data.chargesheet_number}' already exists.")
 
+    # Validate assigned court user
+    if data.assigned_court_id:
+        court_user = db.query(User).filter(
+            User.id == data.assigned_court_id,
+            User.role == UserRole.court,
+            User.is_active == True
+        ).first()
+        if not court_user:
+            raise HTTPException(status_code=400, detail="Selected court user not found or is not a court role.")
+
     chargesheet = ChargeSheet(
         fir_id=data.fir_id,
         chargesheet_number=data.chargesheet_number,
         filed_by_io_id=current_user.id,
         status=ChargesheetStatus.draft,
+        assigned_court_id=data.assigned_court_id,
         accused_ids=data.accused_ids,
         witness_ids=data.witness_ids,
         property_ids=data.property_ids,
@@ -79,7 +90,19 @@ async def create_chargesheet(
     log_action(db, user_id=current_user.id, action="CHARGESHEET_CREATED",
                fir_id=data.fir_id, chargesheet_id=chargesheet.id,
                details=f"CS No: {data.chargesheet_number}", ip_address=request.client.host)
-    return chargesheet
+    return _enrich(chargesheet, db)
+
+
+def _enrich(cs: ChargeSheet, db: Session):
+    """Attach computed fields (assigned_court_name) to a ChargeSheet ORM object."""
+    court_name = None
+    if cs.assigned_court_id:
+        court_user = db.query(User).filter(User.id == cs.assigned_court_id).first()
+        if court_user:
+            court_name = court_user.name
+    # Attach as a transient attribute so Pydantic can serialise it
+    cs.__dict__["assigned_court_name"] = court_name
+    return cs
 
 
 @router.post("/{chargesheet_id}/file", response_model=ChargesheetResponse)
@@ -119,7 +142,7 @@ async def file_chargesheet(
                fir_id=cs.fir_id, chargesheet_id=cs.id,
                details=f"Filed: {cs.chargesheet_number}", ip_address=request.client.host)
     logger.info(f"Charge Sheet {cs.chargesheet_number} officially filed by {current_user.email}")
-    return cs
+    return _enrich(cs, db)
 
 
 @router.get("/{chargesheet_id}", response_model=ChargesheetResponse)
@@ -135,7 +158,7 @@ async def get_chargesheet(
         raise HTTPException(status_code=404, detail="Charge Sheet not found.")
     log_action(db, user_id=current_user.id, action="CHARGESHEET_VIEWED",
                fir_id=cs.fir_id, chargesheet_id=cs.id, ip_address=request.client.host)
-    return cs
+    return _enrich(cs, db)
 
 
 @router.get("/", response_model=List[ChargesheetResponse])
@@ -149,4 +172,5 @@ async def list_chargesheets(
     query = db.query(ChargeSheet)
     if fir_id:
         query = query.filter(ChargeSheet.fir_id == fir_id)
-    return query.order_by(ChargeSheet.created_at.desc()).offset(skip).limit(limit).all()
+    sheets = query.order_by(ChargeSheet.created_at.desc()).offset(skip).limit(limit).all()
+    return [_enrich(cs, db) for cs in sheets]

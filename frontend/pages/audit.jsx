@@ -3,7 +3,7 @@ import AuditLogs from "../src/pages/AuditLogs";
 
 export default function AuditPage() {
   return (
-    <ProtectedRoute roles={["admin", "auditor", "sp"]}>
+    <ProtectedRoute roles={["admin", "auditor", "sp", "dsp"]}>
       <AuditLogs />
     </ProtectedRoute>
   );

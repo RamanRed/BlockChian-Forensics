@@ -334,6 +334,7 @@ class CasePersonMappingResponse(BaseModel):
 class ChargesheetCreate(BaseModel):
     fir_id:               int
     chargesheet_number:   str
+    assigned_court_id:    Optional[int] = None
     accused_ids:          Optional[List[int]] = None
     witness_ids:          Optional[List[int]] = None
     property_ids:         Optional[List[int]] = None
@@ -349,6 +350,8 @@ class ChargesheetResponse(BaseModel):
     chargesheet_number:   str
     filed_by_io_id:       int
     status:               ChargesheetStatus
+    assigned_court_id:    Optional[int]
+    assigned_court_name:  Optional[str] = None
     accused_ids:          Optional[Any]
     witness_ids:          Optional[Any]
     property_ids:         Optional[Any]

@@ -69,7 +69,6 @@ function Register() {
           <option value="dsp">DSP — Deputy SP</option>
           <option value="cfsl">CFSL — Forensic Scientist</option>
           <option value="court">Court — Judicial Officer</option>
-          <option value="lawyer">Lawyer — Defence/Prosecution</option>
           <option value="auditor">Auditor</option>
           <option value="admin">Admin — System Administrator</option>
         </select>

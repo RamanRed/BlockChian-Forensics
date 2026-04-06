@@ -3,7 +3,7 @@ import FIRDetail from "../../src/pages/fir/[id]";
 
 export default function FIRDetailPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={["io", "sp", "dsp", "admin", "court", "auditor", "cfsl"]}>
       <FIRDetail />
     </ProtectedRoute>
   );

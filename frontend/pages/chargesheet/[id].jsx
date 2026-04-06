@@ -3,7 +3,7 @@ import ChargesheetDetail from "../../src/pages/chargesheet/[id]";
 
 export default function ChargesheetDetailPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={["io", "sp", "dsp", "admin", "court", "auditor", "cfsl"]}>
       <ChargesheetDetail />
     </ProtectedRoute>
   );

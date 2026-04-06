@@ -8,7 +8,6 @@ import { AuthContext } from "../context/AuthContext";
 import CourtDashboard from "./court/CourtDashboardPage";
 import ForensicDashboard from "./forensic/ForensicLabDashboard";
 import InvestigatorDashboard from "./investigator/InvestigatorDashboard";
-import LawyerDashboard from "./lawyer/LawyerCaseSearchPage";
 import {
   HiOutlineDocumentText,
   HiOutlineBookOpen,
@@ -46,9 +45,7 @@ function Dashboard() {
     return <ForensicDashboard />;
   }
 
-  if (role === "lawyer") {
-    return <LawyerDashboard />;
-  }
+
 
   const { data, loading } = useFetch(() => firService.list({ limit: 200 }), []);
   const firs = data?.data || data || [];

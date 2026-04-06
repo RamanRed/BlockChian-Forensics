@@ -3,7 +3,7 @@ import SeizureDetail from "../../src/pages/seizure/[id]";
 
 export default function SeizureDetailPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={["io", "sp", "dsp", "admin", "court", "auditor", "cfsl"]}>
       <SeizureDetail />
     </ProtectedRoute>
   );

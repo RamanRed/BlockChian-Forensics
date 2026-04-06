@@ -37,7 +37,6 @@ class UserRole(str, enum.Enum):
     cfsl     = "cfsl"      # Forensic Lab Officer
     court    = "court"     # Court / Magistrate (read-only)
     auditor  = "auditor"   # Internal audit
-    lawyer   = "lawyer"    # Defence / prosecution advocate (read-only, case-scoped)
 
 
 class FIRStatus(str, enum.Enum):
@@ -419,6 +418,9 @@ class ChargeSheet(Base):
     filed_by_io_id        = Column(Integer, ForeignKey("users.id"), nullable=False)
     status                = Column(Enum(ChargesheetStatus), default=ChargesheetStatus.draft)
 
+    # Court assignment — IO selects from available court users
+    assigned_court_id     = Column(Integer, ForeignKey("users.id"), nullable=True)
+
     accused_ids           = Column(JSON, nullable=True)
     witness_ids           = Column(JSON, nullable=True)
     property_ids          = Column(JSON, nullable=True)
@@ -444,6 +446,7 @@ class ChargeSheet(Base):
 
     fir                   = relationship("FIR", back_populates="chargesheets")
     filed_by              = relationship("User", foreign_keys=[filed_by_io_id])
+    assigned_court        = relationship("User", foreign_keys=[assigned_court_id])
     proceedings           = relationship("CourtProceeding", back_populates="chargesheet", cascade="all, delete-orphan")
     supplementary_sheets  = relationship("ChargeSheet", foreign_keys=[parent_chargesheet_id])
 

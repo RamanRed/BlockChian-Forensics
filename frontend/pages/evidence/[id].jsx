@@ -3,7 +3,7 @@ import EvidenceDetails from "../../src/pages/EvidenceDetails";
 
 export default function EvidenceDetailsPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={["io", "sp", "dsp", "admin", "court", "auditor", "cfsl"]}>
       <EvidenceDetails />
     </ProtectedRoute>
   );

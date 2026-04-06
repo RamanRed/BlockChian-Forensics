@@ -3,7 +3,7 @@ import Dashboard from "../src/pages/Dashboard";
 
 export default function DashboardPage() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute roles={["admin", "auditor"]}>
       <Dashboard />
     </ProtectedRoute>
   );

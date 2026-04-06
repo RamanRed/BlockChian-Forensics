@@ -142,7 +142,6 @@ function Sidebar() {
     dsp: "#7c3aed",
     cfsl: "#059669",
     court: "#dc2626",
-    lawyer: "#d97706",
     admin: "#1e293b",
     auditor: "#64748b",
   }[role] || "#64748b";
@@ -185,14 +184,7 @@ function Sidebar() {
           </>
         )}
 
-        {role === "lawyer" && (
-          <>
-            <div className="sidebar-label">Lawyer Portal</div>
-            <NavItem href="/lawyer" icon={<HiOutlineScale />}>Case Search</NavItem>
-            <div className="sidebar-label">Verify</div>
-            <NavItem href="/verify" icon={<HiOutlineShieldCheck />}>Verify Hash</NavItem>
-          </>
-        )}
+
 
         {role === "auditor" && (
           <>
