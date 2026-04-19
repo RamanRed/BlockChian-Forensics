@@ -27,13 +27,21 @@ def _to_wei(gwei: float) -> int:
 
 
 def connect_to_blockchain():
-    """Establish connection to blockchain node and load DIRSRegistry contract."""
+    """Establish connection to blockchain node and load DIRSRegistry contract.
+
+    Network is selected automatically from settings.NETWORK:
+      'local'  → Hardhat (http://127.0.0.1:8545, chainId 1337)
+      'global' → Polygon Amoy testnet (chainId 80002)
+    """
     global _web3, _contract
     try:
         from web3 import Web3
-        _web3 = Web3(Web3.HTTPProvider(settings.BLOCKCHAIN_RPC_URL))
+
+        rpc_url = settings._blockchain_rpc
+        _web3 = Web3(Web3.HTTPProvider(rpc_url))
         if not _web3.is_connected():
-            logger.error("[Blockchain] Cannot connect to node: %s", settings.BLOCKCHAIN_RPC_URL)
+            logger.error("[Blockchain] Cannot connect to node: %s  (NETWORK=%s)",
+                         rpc_url, settings.NETWORK)
             return None
 
         abi_path = os.path.join(os.path.dirname(__file__), "../blockchain/abi.json")
@@ -44,16 +52,23 @@ def connect_to_blockchain():
         with open(abi_path) as f:
             abi = json.load(f)
 
-        address = settings.CONTRACT_ADDRESS
+        address = settings._contract_address
         if not address:
-            logger.warning("[Blockchain] CONTRACT_ADDRESS not set — blockchain disabled.")
+            logger.warning(
+                "[Blockchain] No contract address for NETWORK=%s — blockchain disabled.\n"
+                "  local  → set CONTRACT_ADDRESS in backend/.env\n"
+                "  global → set CONTRACT_ADDRESS_AMOY in backend/.env",
+                settings.NETWORK,
+            )
             return None
 
         _contract = _web3.eth.contract(
             address=Web3.to_checksum_address(address), abi=abi
         )
-        logger.info("[Blockchain] DIRSRegistry connected at %s (chainId=%s)",
-                    settings.BLOCKCHAIN_RPC_URL, settings.CHAIN_ID)
+        logger.info(
+            "[Blockchain] DIRSRegistry connected | network=%s | rpc=%s | chainId=%s | contract=%s",
+            settings.NETWORK, rpc_url, settings._chain_id, address,
+        )
         return _web3
 
     except ImportError:
@@ -81,10 +96,13 @@ async def get_eip1559_gas_params(web3) -> Dict[str, Any]:
 def _build_gas_params(web3) -> Dict[str, Any]:
     """
     Build gas parameters for the transaction.
-    - EIP-1559 (Polygon): uses maxFeePerGas + maxPriorityFeePerGas
-    - Legacy (Hardhat local): uses gasPrice
+    - EIP-1559 (Polygon Amoy / mainnet): uses maxFeePerGas + maxPriorityFeePerGas
+    - Legacy (Hardhat local):            uses gasPrice
+
+    When NETWORK='global', EIP-1559 is always active.
+    When NETWORK='local', falls back to legacy gasPrice.
     """
-    if settings.USE_EIP1559:
+    if settings._use_eip1559:
         # Polygon EIP-1559
         max_fee       = _to_wei(settings.MAX_FEE_PER_GAS_GWEI)
         priority_fee  = _to_wei(settings.MAX_PRIORITY_FEE_GWEI)
@@ -122,10 +140,10 @@ async def store_record_hash(
 
     try:
         from web3 import Web3
-        account = web3.eth.account.from_key(settings.WALLET_PRIVATE_KEY)
+        account = web3.eth.account.from_key(settings._wallet_private_key)
         nonce   = web3.eth.get_transaction_count(account.address)
 
-        if settings.CHAIN_ID in {137, 80002}:
+        if settings._chain_id in {137, 80002}:
             gas_params = await get_eip1559_gas_params(web3)
         else:
             gas_params = _build_gas_params(web3)
@@ -139,11 +157,11 @@ async def store_record_hash(
             "from":    account.address,
             "nonce":   nonce,
             "gas":     300_000,
-            "chainId": settings.CHAIN_ID,
+            "chainId": settings._chain_id,
             **gas_params,
         })
 
-        signed_tx = web3.eth.account.sign_transaction(tx, settings.WALLET_PRIVATE_KEY)
+        signed_tx = web3.eth.account.sign_transaction(tx, settings._wallet_private_key)
         tx_hash   = web3.eth.send_raw_transaction(signed_tx.raw_transaction)
         receipt   = web3.eth.wait_for_transaction_receipt(tx_hash, timeout=120)
 

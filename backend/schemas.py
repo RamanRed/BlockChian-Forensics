@@ -21,6 +21,7 @@ class UserRole(str, Enum):
     cfsl     = "cfsl"
     court    = "court"
     auditor  = "auditor"
+    lawyer   = "lawyer"   # defence / prosecution advocate (read-only)
 
 
 class FIRStatus(str, Enum):

@@ -40,5 +40,3 @@ def sample_image_bytes(sample_test_image):
         pytest.skip("No test images found")
     with open(sample_test_image, "rb") as f:
         return f.read()
-    with open(images[0], "rb") as f:
-        return f.read()

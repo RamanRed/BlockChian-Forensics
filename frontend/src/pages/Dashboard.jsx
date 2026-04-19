@@ -1,6 +1,5 @@
-import { useMemo, useContext, useEffect } from "react";
+import { useMemo, useContext } from "react";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import Loader from "../components/Loader";
 import { useFetch } from "../hooks/useFetch";
 import { firService } from "../services/dirsService";
@@ -33,24 +32,29 @@ const StatCard = ({ icon, value, label, color, href }) => (
 function Dashboard() {
   const { role } = useContext(AuthContext);
 
-  // Redirect investigator roles to their portal
+  // useFetch must be called unconditionally (Rules of Hooks).
+  // We pass enabled=false for non-admin roles so no request fires.
+  const isAdminDashboard = !role || ["admin", "auditor"].includes(role);
+  const { data, loading } = useFetch(
+    () => firService.list({ limit: 200 }),
+    [role],
+    isAdminDashboard  // only fetches when showing the admin/auditor dashboard
+  );
+
+  // Role-specific portals — returned AFTER all hooks
   if (["io", "sp", "dsp"].includes(role)) {
     return <InvestigatorDashboard />;
   }
-
   if (role === "court") {
     return <CourtDashboard />;
   }
-
   if (role === "cfsl") {
     return <ForensicDashboard />;
   }
-
   if (role === "lawyer") {
     return <LawyerDashboard />;
   }
 
-  const { data, loading } = useFetch(() => firService.list({ limit: 200 }), []);
   const firs = data?.data || data || [];
 
   const stats = useMemo(

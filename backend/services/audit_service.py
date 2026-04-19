@@ -16,7 +16,9 @@ def log_action(
     action: str,
     fir_id: Optional[int] = None,
     evidence_id: Optional[int] = None,
+    property_id: Optional[int] = None,   # alias for evidence_id used in some routes
     chargesheet_id: Optional[int] = None,
+    finding_id: Optional[int] = None,
     details: Optional[str] = None,
     ip_address: Optional[str] = None,
     result: str = "success",
@@ -37,12 +39,15 @@ def log_action(
     """
     try:
         from models import AuditLog
+        # property_id is a caller-side alias for evidence_id
+        resolved_evidence_id = evidence_id or property_id
         entry = AuditLog(
             user_id=user_id,
             action=action,
             fir_id=fir_id,
-            evidence_id=evidence_id,
+            evidence_id=resolved_evidence_id,
             chargesheet_id=chargesheet_id,
+            finding_id=finding_id,
             details=details,
             ip_address=ip_address,
             result=result,

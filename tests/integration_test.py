@@ -29,7 +29,7 @@ def test_complete_workflow():
     print("="*70 + "\n")
     
     # Step 1: Load test image
-    test_images_dir = Path(__file__).parent / "test images"
+    test_images_dir = Path(__file__).parent / "test_images"
     images = list(test_images_dir.glob("*.jpg"))
     
     if not images:

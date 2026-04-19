@@ -84,24 +84,41 @@ class PinataIPFSService:
 
 # Legacy wrapper for backwards compatibility with existing working routes
 async def upload_to_ipfs(file_path: str) -> str:
+    """Upload a local file to Pinata IPFS. Returns CID string or empty string on failure."""
     from config import settings
     import os
     if not settings.PINATA_JWT:
         return ""
-    
+
     filename = os.path.basename(file_path)
-    # Determine mime-type loosely based on extension
-    ext = filename.lower().split('.')[-1]
-    content_type = "image/jpeg" if ext in ["jpg", "jpeg"] else "image/png" if ext == "png" else "application/pdf" if ext == "pdf" else "application/octet-stream"
-    
-    with open(file_path, "rb") as f:
-        file_bytes = f.read()
-        
+    ext = filename.lower().rsplit('.', 1)[-1] if '.' in filename else ''
+    MIME_MAP = {
+        "jpg": "image/jpeg", "jpeg": "image/jpeg",
+        "png": "image/png", "bmp": "image/bmp",
+        "tiff": "image/tiff", "webp": "image/webp",
+        "mp4": "video/mp4", "avi": "video/avi",
+        "mov": "video/quicktime", "mkv": "video/x-matroska",
+        "webm": "video/webm",
+        "wav": "audio/wav", "mp3": "audio/mpeg",
+        "ogg": "audio/ogg", "m4a": "audio/m4a",
+        "pdf": "application/pdf",
+        "doc": "application/msword",
+        "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "txt": "text/plain",
+    }
+    content_type = MIME_MAP.get(ext, "application/octet-stream")
+
+    try:
+        with open(file_path, "rb") as fh:
+            file_bytes = fh.read()
+    except OSError as e:
+        print(f"[IPFS] Could not read file {file_path}: {e}")
+        return ""
+
     service = PinataIPFSService()
     try:
-        # returns dict with cid
         result = await service.upload_file(file_bytes, filename, content_type)
         return result.get("cid", "")
     except Exception as e:
-        print(f"Pinata IPFS error: {str(e)}")
+        print(f"[IPFS] Pinata upload error: {e}")
         return ""

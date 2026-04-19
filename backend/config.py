@@ -29,7 +29,42 @@ class Settings:
     # ── Database ─────────────────────────────────────────────────────────
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./dirs_forensic.db")
 
+    # ── Network mode: 'local' = Hardhat, 'global' = Polygon Amoy ─────────
+    NETWORK: str = os.getenv("NETWORK", "local")  # 'local' or 'global'
+
     # ── Blockchain ───────────────────────────────────────────────────────
+    # These are auto-resolved from NETWORK; you can also override directly.
+    @property
+    def _blockchain_rpc(self) -> str:
+        if self.NETWORK == "global":
+            return os.getenv("POLYGON_AMOY_RPC", "https://rpc-amoy.polygon.technology")
+        return os.getenv("BLOCKCHAIN_RPC_URL", "http://127.0.0.1:8545")
+
+    @property
+    def _contract_address(self) -> str:
+        if self.NETWORK == "global":
+            return os.getenv("CONTRACT_ADDRESS_AMOY", "")
+        return os.getenv("CONTRACT_ADDRESS", "")
+
+    @property
+    def _wallet_private_key(self) -> str:
+        if self.NETWORK == "global":
+            return os.getenv("DEPLOYER_PRIVATE_KEY", "")
+        return os.getenv("WALLET_PRIVATE_KEY", "")
+
+    @property
+    def _chain_id(self) -> int:
+        if self.NETWORK == "global":
+            return int(os.getenv("POLYGON_CHAIN_ID", "80002"))
+        return int(os.getenv("CHAIN_ID", "1337"))
+
+    @property
+    def _use_eip1559(self) -> bool:
+        if self.NETWORK == "global":
+            return True
+        return os.getenv("USE_EIP1559", "False") == "True"
+
+    # Static env vars (kept for backward compat / direct override)
     BLOCKCHAIN_RPC_URL: str  = os.getenv("BLOCKCHAIN_RPC_URL", "http://127.0.0.1:8545")
     CONTRACT_ADDRESS: str    = os.getenv("CONTRACT_ADDRESS", "")
     WALLET_PRIVATE_KEY: str  = os.getenv("WALLET_PRIVATE_KEY", "")

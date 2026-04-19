@@ -99,8 +99,8 @@ async def upload_evidence(
     # Use the new unified blockchain service method (store_record_hash)
     bc_result = await store_record_hash(
         record_type="evidence",
-        record_id=file_hash[:16],  # Evidence doesn't have a natural human ID, use hash prefix
-        data_hash=bound_data,
+        record_id=file_hash[:16],  # hash prefix as a stable short ID
+        data_hash=file_hash,       # pass the raw SHA-256 string, not the bound dict
         ipfs_cid=ipfs_cid or ""
     )
     if bc_result:
@@ -109,8 +109,27 @@ async def upload_evidence(
 
     # Step 9: Save to database
     import json
+
+    # Resolve seizure memo ID — use the provided case_number if numeric,
+    # otherwise look up the first memo for safety. Never hard-code ID 1.
+    resolved_memo_id: Optional[int] = None
+    if case_number and case_number.isdigit():
+        resolved_memo_id = int(case_number)
+    else:
+        from models import SeizureMemo as _SM
+        first_memo = db.query(_SM).first()
+        if first_memo:
+            resolved_memo_id = first_memo.id
+
+    if not resolved_memo_id:
+        raise HTTPException(
+            status_code=400,
+            detail="case_number must be a valid Seizure Memo ID. "
+                   "Upload evidence via POST /api/seizure/property/upload to link it to a memo."
+        )
+
     evidence = PropertyRegister(
-        seizure_memo_id=int(case_number) if case_number and case_number.isdigit() else 1, # default to memo 1 if missing for testing
+        seizure_memo_id=resolved_memo_id,
         property_number=f"EVD-{''.join(str(uuid.uuid4()).split('-')[:2])}",
         item_type="digital",
         description=description or file.filename,

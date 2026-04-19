@@ -19,9 +19,9 @@ async def get_case_summary(
         raise HTTPException(status_code=404, detail="FIR not found")
     return {
         "fir_number": fir.fir_number,
-        "status": fir.status,
-        "investigation_state": fir.investigation_state,
-        "date_of_offence": fir.date_of_offence,
+        "status": fir.status.value if hasattr(fir.status, 'value') else fir.status,
+        "investigation_state": fir.investigation_state.value if fir.investigation_state and hasattr(fir.investigation_state, 'value') else fir.investigation_state,
+        "date_of_offence": fir.date_of_offence.isoformat() if fir.date_of_offence else None,
         "place_of_offence": fir.place_of_offence,
         "offence_sections": fir.offence_sections,
         "offence_description": fir.offence_description,
@@ -34,7 +34,7 @@ async def get_case_diary(
     current_user: User = Depends(require_read_only)
 ):
     entries = db.query(CaseDiaryEntry).filter(CaseDiaryEntry.fir_id == fir_id).all()
-    return [{"entry_number": e.entry_number, "action_taken": e.action_taken, "date": e.entry_date} for e in entries]
+    return [{"entry_number": e.entry_number, "action_taken": e.action_taken, "date": e.entry_date.isoformat() if e.entry_date else None} for e in entries]
 
 @router.get("/cases/{fir_id}/persons")
 async def get_case_persons(
@@ -78,4 +78,4 @@ async def get_case_proceedings(
     if not sheet:
         return []
     proceedings = db.query(CourtProceeding).filter(CourtProceeding.chargesheet_id == sheet.id).all()
-    return [{"date": p.hearing_date, "order_summary": p.order_summary, "next_hearing_date": p.next_hearing_date} for p in proceedings]
+    return [{"date": p.hearing_date.isoformat() if p.hearing_date else None, "order_summary": p.order_summary, "next_hearing_date": p.next_hearing_date.isoformat() if p.next_hearing_date else None} for p in proceedings]

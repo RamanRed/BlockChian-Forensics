@@ -22,12 +22,12 @@ logger = setup_logger(__name__)
 
 # Helpers
 async def _handle_ipfs_and_blockchain(
-    fir_id: int, 
-    finding_id: str, 
-    original_hash: str, 
-    file_bytes: bytes = None, 
-    filename: str = None, 
-    content_type: str = None
+    fir_id: int,
+    record_id: str,          # unique id passed to blockchain (was mis-named 'finding_id' / 'details')
+    original_hash: str,
+    file_bytes: bytes = None,
+    filename: str = None,
+    content_type: str = None,
 ) -> tuple[Optional[str], Optional[str], Optional[str]]:
     ipfs_cid = None
     if file_bytes and settings.PINATA_JWT:
@@ -38,7 +38,7 @@ async def _handle_ipfs_and_blockchain(
         except Exception as e:
             logger.error(f"IPFS Upload Error: {e}")
             
-    bc_result = await store_record_hash("finding", finding_id, original_hash, ipfs_cid=ipfs_cid or "")
+    bc_result = await store_record_hash("finding", record_id, original_hash, ipfs_cid=ipfs_cid or "")
     blockchain_tx = None
     blockchain_hash = original_hash
     if bc_result:
@@ -91,7 +91,7 @@ async def add_lab_report(
     db.flush()
     
     cid, tx, bc_hash = await _handle_ipfs_and_blockchain(
-        fir_id=fir_id, details=f"lab_{finding.id}", original_hash=original_hash,
+        fir_id=fir_id, record_id=f"lab_{finding.id}", original_hash=original_hash,
         file_bytes=file_bytes, filename=file.filename, content_type=file.content_type
     )
     
@@ -158,8 +158,8 @@ async def add_media(
     
     # Only push verified content to IPFS to save space/protect integrity if desired, or push all.
     cid, tx, bc_hash = await _handle_ipfs_and_blockchain(
-        fir_id=fir_id, details=f"media_{finding.id}", original_hash=original_hash,
-        file_bytes=file_bytes if ai_result.status != AIStatus.SUSPICIOUS else None, 
+        fir_id=fir_id, record_id=f"media_{finding.id}", original_hash=original_hash,
+        file_bytes=file_bytes if ai_result.status != AIStatus.SUSPICIOUS else None,
         filename=file.filename, content_type=file.content_type
     )
     
@@ -220,7 +220,7 @@ async def add_finding(
     
     # IPFS - for text, we upload the raw text buffer
     cid, tx, bc_hash = await _handle_ipfs_and_blockchain(
-        fir_id=fir_id, details=f"text_{finding.id}", original_hash=payload_hash,
+        fir_id=fir_id, record_id=f"text_{finding.id}", original_hash=payload_hash,
         file_bytes=text_content.encode('utf-8'), filename=f"finding_{finding.id}.txt", content_type="text/plain"
     )
     

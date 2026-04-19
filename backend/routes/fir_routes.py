@@ -15,7 +15,7 @@ from datetime import datetime
 import hashlib, json
 
 from database import get_db
-from models import User, FIR, AuditLog, FIRStatus
+from models import User, FIR, AuditLog, FIRStatus, UserRole
 from schemas import FIRCreate, FIRResponse, FIRStatusUpdate
 from auth.dependencies import get_current_user, require_investigator
 from services.blockchain_service import store_record_hash
@@ -183,8 +183,8 @@ async def list_firs(
     query = db.query(FIR)
     if status_filter:
         query = query.filter(FIR.status == status_filter)
-    # IO restricted to own cases
-    if current_user.role == "io":
+    # IO restricted to own cases (compare enum to enum, not string)
+    if current_user.role == UserRole.io:
         query = query.filter(
             (FIR.registered_by == current_user.id) |
             (FIR.io_assigned == current_user.id)
