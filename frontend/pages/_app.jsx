@@ -9,6 +9,7 @@ import { AuthProvider } from "../src/context/AuthContext";
 import { useAuth } from "../src/hooks/useAuth";
 import { useRouter } from "next/router";
 import Head from "next/head";
+import Script from "next/script";
 
 function Shell({ Component, pageProps }) {
   const { token } = useAuth();
@@ -41,6 +42,11 @@ export default function MyApp({ Component, pageProps }) {
   return (
     <AuthProvider>
       <Shell Component={Component} pageProps={pageProps} />
+      <Script
+        src="https://tryproduck.com/sdk/v1.js"
+        data-project="pk_live_ddf6dbbf6aa183bea776c4d3dd3915c7380afdefe46327b5"
+        strategy="afterInteractive"
+      />
     </AuthProvider>
   );
 }
